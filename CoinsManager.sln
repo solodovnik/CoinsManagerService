@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoinsManager", "CoinsManager\CoinsManager.csproj", "{6E1474BE-E608-4904-9E90-3AD5C201A773}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{810D424B-2F7F-47B8-AF69-428A167D2A8F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontends", "Frontends", "{E678ACDE-6528-4E6C-8644-30D6836D3FC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinsManager.Web", "CoinsManager.Web\CoinsManager.Web.csproj", "{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E1474BE-E608-4904-9E90-3AD5C201A773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E1474BE-E608-4904-9E90-3AD5C201A773}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E1474BE-E608-4904-9E90-3AD5C201A773}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E1474BE-E608-4904-9E90-3AD5C201A773}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6E1474BE-E608-4904-9E90-3AD5C201A773} = {810D424B-2F7F-47B8-AF69-428A167D2A8F}
+		{0114C58A-2C7E-4AFB-BD71-F649BC7CDBB5} = {E678ACDE-6528-4E6C-8644-30D6836D3FC9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB0171F9-6013-4766-8252-E73412FB3F57}
+	EndGlobalSection
+EndGlobal

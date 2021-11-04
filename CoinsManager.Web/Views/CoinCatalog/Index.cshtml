@@ -1,0 +1,26 @@
+﻿@*@model CoinsManager.Web.Models.View.CoinListModel*@
+
+hello
+@*<div class="row">
+    @if (Model.Coins.Count() == 0)
+    {
+        <text>No events were found.</text>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr class="columnHeader">
+                    <th></th>
+                    <th>DATE</th>
+                    <th>NAME</th>
+                    <th>ARTIST</th>
+                    <th>PRICE</th>
+                </tr>
+            </thead>
+            <tbody>
+                @Html.DisplayFor(m => m.Coins)
+            </tbody>
+        </table>
+    }
+</div>*@
