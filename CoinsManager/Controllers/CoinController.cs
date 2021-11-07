@@ -15,17 +15,17 @@ namespace CoinsManager.Controllers
             dbContext = new CoinsCollectionContext();
         }
 
-        [HttpGet/*("{periodId}")*/]
+        [HttpGet]
         public IEnumerable<Coin> GetByPeriod([FromQuery]int periodId)
         {
            return (periodId == 0) ? dbContext.Coins : dbContext.Coins.Where(x => x.Period == periodId);
         }
 
-        //[HttpGet]
-        //public IEnumerable<Coin> GetAll()
-        //{
-        //    return dbContext.Coins;
-        //}
+        [HttpGet("GetAll")]
+        public IEnumerable<Coin> GetAll()
+        {
+            return dbContext.Coins;
+        }
 
         //public IActionResult GetAllCoins()
         //{
