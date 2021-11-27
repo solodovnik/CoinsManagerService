@@ -52,6 +52,8 @@ namespace CoinsManagerService.Models
                     .IsRequired()
                     .HasMaxLength(50);
 
+                entity.Property(e => e.PictPreviewPath);
+
                 entity.HasOne(d => d.PeriodNavigation)
                     .WithMany(p => p.Coins)
                     .HasForeignKey(d => d.Period)
