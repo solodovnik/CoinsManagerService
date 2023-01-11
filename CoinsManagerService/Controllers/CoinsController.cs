@@ -1,4 +1,6 @@
-﻿using CoinsManagerService.Models;
+﻿using AutoMapper;
+using CoinsManagerService.Dtos;
+using CoinsManagerService.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,21 +12,18 @@ namespace CoinsManagerService.Controllers
     public class CoinsController : ControllerBase
     {
         private readonly CoinsCollectionContext dbContext;
-        public CoinsController()
+        private readonly IMapper _mapper;
+
+        public CoinsController(IMapper mapper)
         {
             dbContext = new CoinsCollectionContext();
+            _mapper = mapper;
         }
 
-        [HttpGet("{periodId}")]
+        [HttpGet("GetCoinsByPeriod")]
         public IEnumerable<Coin> GetCoinsByPeriod(int periodId)
         {
            return (periodId == 0) ? dbContext.Coins : dbContext.Coins.Where(x => x.Period == periodId);
-        }
-
-        [HttpGet]
-        public IEnumerable<Coin> GetAllCoins()
-        {
-            return dbContext.Coins;
         }
 
         [HttpGet("GetAllContinents")]
@@ -57,13 +56,29 @@ namespace CoinsManagerService.Controllers
             return dbContext.Periods.Where(x => x.Country == countryId);
         }
 
-        //public IActionResult GetAllCoins()
-        //{
-        //    var coins = dbContext.Coins;
-        //    if (!coins.Any())
-        //        return new NoContentResult();
+        [HttpGet("{id}")]
+        public ActionResult<CoinReadDto> GetCoinById(int id)
+        {
+            var coinItem = dbContext.Coins.FirstOrDefault(x => x.Id == id);
+            if (coinItem != null)
+            {
+                return Ok(_mapper.Map<CoinReadDto>(coinItem));
+            }
 
-        //    return new ObjectResult(coins);
-        //}
+            return NotFound();
+        }
+
+        [HttpPost]
+        public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
+        {
+            var coinModel = _mapper.Map<Coin>(coinCreateDto);
+            dbContext.Add(coinModel);
+            dbContext.SaveChanges();
+
+            var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
+
+            return CreatedAtRoute(nameof(GetCoinById), new { Id = coinReadDto.Id }, coinReadDto);
+        }
+        
     }
 }
