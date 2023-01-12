@@ -15,8 +15,7 @@ namespace CoinsManagerService.Dtos
 
         [Required]
         public int Type { get; set; }
-
-        [Required] 
+         
         public string CommemorativeName { get; set; }
 
         [Required]

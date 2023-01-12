@@ -1,68 +1,83 @@
 ﻿using AutoMapper;
+using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace CoinsManagerService.Controllers
 {
     [ApiController]
     [Route("v1/[controller]")]
     public class CoinsController : ControllerBase
-    {
-        private readonly CoinsCollectionContext dbContext;
+    {        
         private readonly IMapper _mapper;
+        private readonly ICoinsRepo _coinsRepo;
 
-        public CoinsController(IMapper mapper)
-        {
-            dbContext = new CoinsCollectionContext();
+        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo)
+        {           
             _mapper = mapper;
+            _coinsRepo = coinsRepo;
         }
 
         [HttpGet("GetCoinsByPeriod")]
-        public IEnumerable<Coin> GetCoinsByPeriod(int periodId)
-        {
-           return (periodId == 0) ? dbContext.Coins : dbContext.Coins.Where(x => x.Period == periodId);
+        public ActionResult<IEnumerable<CoinReadDto>> GetCoinsByPeriod(int periodId)
+        {            
+            return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
         }
 
         [HttpGet("GetAllContinents")]
-        public IEnumerable<Continent> GetAllContinents()
+        public ActionResult<IEnumerable<Continent>> GetAllContinents()
         {
-            return dbContext.Continents;
+            return Ok(_coinsRepo.GetAllContinents());
         }
 
         [HttpGet("GetCountriesByContinent")]
-        public IEnumerable<Country> GetCountriesByContinent(int continentId)
+        public ActionResult<IEnumerable<Country>> GetCountriesByContinent(int continentId)
         {
-            return dbContext.Countries.Where(x => x.Continent == continentId);
+            return Ok(_coinsRepo.GetCountriesByContinentId(continentId));
         }
 
         [HttpGet("Countries/{countryId}")]
-        public Country GetCountryById(int countryId)
+        public ActionResult<Country> GetCountryById(int countryId)
         {
-            return dbContext.Countries.FirstOrDefault(x => x.Id == countryId);
+            var country = _coinsRepo.GetCountryById(countryId);
+
+            if(country != null)
+            {
+                return Ok(country);
+            }
+
+            return NotFound();
         }
 
         [HttpGet("Continents/{continentId}")]
-        public Continent GetContinentById(int continentId)
+        public ActionResult<Continent> GetContinentById(int continentId)
         {
-            return dbContext.Continents.FirstOrDefault(x => x.Id == continentId);
+            var continent = _coinsRepo.GetContinentById(continentId);
+
+            if (continent != null)
+            {
+                return Ok(continent);
+            }
+
+            return NotFound();
         }
 
         [HttpGet("GetPeriodsByCountry")]
-        public IEnumerable<Period> GetPeriodsByCountry(int countryId)
+        public ActionResult<IEnumerable<Period>> GetPeriodsByCountry(int countryId)
         {
-            return dbContext.Periods.Where(x => x.Country == countryId);
+            return Ok(_coinsRepo.GetPeriodsByCountryId(countryId));
         }
 
         [HttpGet("{id}")]
         public ActionResult<CoinReadDto> GetCoinById(int id)
         {
-            var coinItem = dbContext.Coins.FirstOrDefault(x => x.Id == id);
-            if (coinItem != null)
+            var coin = _coinsRepo.GetCoinById(id);
+
+            if (coin != null)
             {
-                return Ok(_mapper.Map<CoinReadDto>(coinItem));
+                return Ok(_mapper.Map<CoinReadDto>(coin));
             }
 
             return NotFound();
@@ -72,8 +87,9 @@ namespace CoinsManagerService.Controllers
         public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
         {
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
-            dbContext.Add(coinModel);
-            dbContext.SaveChanges();
+
+            _coinsRepo.CreateCoin(coinModel);
+            _coinsRepo.SaveChanges();
 
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 
