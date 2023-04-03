@@ -55,6 +55,8 @@ namespace CoinsManagerService
             {
                 c.SwaggerEndpoint("v1/swagger.json", "My API v1");
             });
+
+            PrepDb.PrepareDatabase(app);
         }
     }
 }
