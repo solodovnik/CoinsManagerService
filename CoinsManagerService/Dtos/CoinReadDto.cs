@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-#nullable disable
-
-namespace CoinsManagerService.Models
+﻿
+namespace CoinsManagerService.Dtos
 {
-    public partial class Coin
-    {
+    public class CoinReadDto
+    {        
         public int Id { get; set; }
         public string Nominal { get; set; }
         public string Currency { get; set; }
@@ -15,8 +11,5 @@ namespace CoinsManagerService.Models
         public string CommemorativeName { get; set; }
         public int Period { get; set; }
         public string PictPreviewPath { get; set; }
-
-        public virtual Period PeriodNavigation { get; set; }
-        public virtual CoinType TypeNavigation { get; set; }
     }
 }

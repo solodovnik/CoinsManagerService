@@ -1,8 +1,11 @@
+using CoinsManagerService.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace CoinsManagerService
 {
@@ -14,12 +17,13 @@ namespace CoinsManagerService
         }
 
         public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
+        
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("CoinsConn")));
+            services.AddScoped<ICoinsRepo, CoinsRepo>();
             services.AddControllers();
-
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Coins Manager", Version = "v1" });
@@ -51,6 +55,8 @@ namespace CoinsManagerService
             {
                 c.SwaggerEndpoint("v1/swagger.json", "My API v1");
             });
+
+            PrepDb.PrepareDatabase(app);
         }
     }
 }
