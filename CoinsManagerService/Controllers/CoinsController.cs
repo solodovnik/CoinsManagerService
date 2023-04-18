@@ -10,19 +10,19 @@ namespace CoinsManagerService.Controllers
     [ApiController]
     [Route("v1/[controller]")]
     public class CoinsController : ControllerBase
-    {        
+    {
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
 
         public CoinsController(IMapper mapper, ICoinsRepo coinsRepo)
-        {           
+        {
             _mapper = mapper;
             _coinsRepo = coinsRepo;
         }
 
         [HttpGet("GetCoinsByPeriod")]
         public ActionResult<IEnumerable<CoinReadDto>> GetCoinsByPeriod(int periodId)
-        {            
+        {
             return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
         }
 
@@ -43,7 +43,7 @@ namespace CoinsManagerService.Controllers
         {
             var country = _coinsRepo.GetCountryById(countryId);
 
-            if(country != null)
+            if (country != null)
             {
                 return Ok(country);
             }
@@ -95,6 +95,6 @@ namespace CoinsManagerService.Controllers
 
             return CreatedAtRoute(nameof(GetCoinById), new { Id = coinReadDto.Id }, coinReadDto);
         }
-        
+
     }
 }
