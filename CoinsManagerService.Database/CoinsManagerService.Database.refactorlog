@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="9563aff8-0a53-44f3-86fc-f0b7e1206a9b" ChangeDateTime="04/18/2023 13:00:19">
+    <Property Name="ElementName" Value="[dbo].[Coins].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Coins]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ID" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="f24ba092-1b81-4988-a399-d7820cb83325" ChangeDateTime="04/18/2023 13:02:22">
+    <Property Name="ElementName" Value="[dbo].[CoinTypes].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[CoinTypes]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ID" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="79f6919f-a8ef-415b-ab32-7d8e8fad6232" ChangeDateTime="04/18/2023 13:07:12">
+    <Property Name="ElementName" Value="[dbo].[FK_Coins_ToTable]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Coins]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Coins_Types]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="0bb96db3-e203-497e-bbb0-2655b62de025" ChangeDateTime="04/18/2023 13:10:24">
+    <Property Name="ElementName" Value="[dbo].[FK_Coins_ToTable]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Coins]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Coins_Typed]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="3af2d890-9c8c-4dbe-b3cf-14d5f7e262a1" ChangeDateTime="04/18/2023 13:19:55">
+    <Property Name="ElementName" Value="[dbo].[FK_Coins_Typed]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Coins]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Coins_Types]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="dd3a8ef5-396a-4814-a96a-e7446fa3b94b" ChangeDateTime="04/19/2023 07:08:33">
+    <Property Name="ElementName" Value="[dbo].[Continents].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Continents]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ID" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="c91c4405-a4b6-4396-b300-c912986cd8db" ChangeDateTime="04/19/2023 07:09:56">
+    <Property Name="ElementName" Value="[dbo].[Countries].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Countries]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ID" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="9a54e482-a710-48c1-bd3c-3b920705b2ff" ChangeDateTime="04/19/2023 07:11:11">
+    <Property Name="ElementName" Value="[dbo].[FK_Countries_ToTable]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Countries]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Countries_Continents]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="6fd5c857-f885-46f4-b973-6bf604e37d38" ChangeDateTime="04/19/2023 07:13:02">
+    <Property Name="ElementName" Value="[dbo].[Periods].[Id]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Periods]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ID" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="bf31c27c-458a-4363-aede-66c2b74b1e6a" ChangeDateTime="04/19/2023 07:14:16">
+    <Property Name="ElementName" Value="[dbo].[FK_Periods_ToTable]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Periods]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Periods_Countries]" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="ec74472a-7998-44a1-800c-01a28d26232e" ChangeDateTime="04/19/2023 07:31:02">
+    <Property Name="ElementName" Value="[dbo].[FK_Coins_ToTable]" />
+    <Property Name="ElementType" Value="SqlForeignKeyConstraint" />
+    <Property Name="ParentElementName" Value="[dbo].[Coins]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="[FK_Coins_Periods]" />
+  </Operation>
+</Operations>
