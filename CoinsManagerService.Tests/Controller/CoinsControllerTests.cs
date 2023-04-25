@@ -5,6 +5,7 @@ using CoinsManagerService.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace CoinsManagerService.Tests.Controller
 {
