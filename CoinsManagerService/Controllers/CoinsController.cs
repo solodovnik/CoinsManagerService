@@ -83,7 +83,7 @@ namespace CoinsManagerService.Controllers
             return NotFound();
         }
 
-        [HttpPost]
+        [HttpPost("Create")]
         public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
         {
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
