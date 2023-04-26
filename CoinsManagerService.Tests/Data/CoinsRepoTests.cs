@@ -2,6 +2,10 @@ using CoinsManagerService.Data;
 using CoinsManagerService.Models;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CoinsManagerService.Tests.Data
 {
