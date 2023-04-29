@@ -2,11 +2,13 @@
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 
 namespace CoinsManagerService.Controllers
 {
+    [Authorize(Roles = "Api.ReadWrite")]
     [ApiController]
     [Route("v1/[controller]")]
     public class CoinsController : ControllerBase
@@ -25,7 +27,7 @@ namespace CoinsManagerService.Controllers
         {
             return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
         }
-
+        
         [HttpGet("GetAllContinents")]
         public ActionResult<IEnumerable<Continent>> GetAllContinents()
         {
