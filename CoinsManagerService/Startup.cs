@@ -46,15 +46,19 @@ namespace CoinsManagerService
             app.UseRouting();
 
             app.UseAuthentication();
-            app.Use(async (context, next) =>
+            app.UseAuthorization();
+            if (!env.IsDevelopment())
             {
-                if (!context.User.Identity?.IsAuthenticated ?? false)
+                app.Use(async (context, next) =>
                 {
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Not Authenticated");
-                }
-                else await next();
-            });
+                    if (!context.User.Identity?.IsAuthenticated ?? false)
+                    {
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteAsync("Not Authenticated");
+                    }
+                    else await next();
+                });
+            }
 
             app.UseEndpoints(endpoints =>
             {
