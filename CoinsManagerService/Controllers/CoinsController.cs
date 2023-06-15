@@ -3,7 +3,9 @@ using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 
 namespace CoinsManagerService.Controllers
@@ -97,6 +99,29 @@ namespace CoinsManagerService.Controllers
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 
             return CreatedAtRoute(_getCoinEndpointName, new { Id = coinReadDto.Id }, coinReadDto);
+        }
+
+        [HttpDelete("coins/{coinId}")]
+        public ActionResult<CoinReadDto> DeleteCoin(int coinId)
+        {
+            try
+            {
+                var coinToDelete = _coinsRepo.GetCoinById(coinId);
+
+                if (coinToDelete == null)
+                {
+                    return NotFound($"Coin with id {coinId} not found");
+                }
+
+                _coinsRepo.RemoveCoin(coinToDelete);
+                _coinsRepo.SaveChanges();
+                return Ok();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Error occured while trying to delete data");
+            }
         }
     }
 }

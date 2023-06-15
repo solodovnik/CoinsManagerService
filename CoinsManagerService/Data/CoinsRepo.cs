@@ -59,6 +59,16 @@ namespace CoinsManagerService.Data
             return _context.Periods.Where(x => x.Country == countryId);
         }
 
+        public void RemoveCoin(Coin coin)
+        {
+            if (coin == null)
+            {
+                throw new ArgumentNullException(nameof(coin));
+            }
+
+            _context.Coins.Remove(coin);
+        }
+
         public bool SaveChanges()
         {
             return (_context.SaveChanges() >= 0);

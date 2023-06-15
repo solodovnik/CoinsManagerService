@@ -16,5 +16,6 @@ namespace CoinsManagerService.Data
         IEnumerable<Period> GetPeriodsByCountryId(int countryId);       
 
         void CreateCoin(Coin coin);
+        void RemoveCoin(Coin coin);
     }
 }
