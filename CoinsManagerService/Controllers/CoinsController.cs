@@ -10,11 +10,12 @@ namespace CoinsManagerService.Controllers
 {
     [Authorize(Roles = "Api.ReadWrite")]
     [ApiController]
-    [Route("v1/[controller]")]
+    [Route("api")]
     public class CoinsController : ControllerBase
     {
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
+        private const string _getCoinEndpointName = "GetCoinEndpoint";
 
         public CoinsController(IMapper mapper, ICoinsRepo coinsRepo)
         {
@@ -22,38 +23,13 @@ namespace CoinsManagerService.Controllers
             _coinsRepo = coinsRepo;
         }
 
-        [HttpGet("GetCoinsByPeriod")]
-        public ActionResult<IEnumerable<CoinReadDto>> GetCoinsByPeriod(int periodId)
-        {
-            return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
-        }
-        
-        [HttpGet("GetAllContinents")]
-        public ActionResult<IEnumerable<Continent>> GetAllContinents()
+        [HttpGet("continents")]
+        public ActionResult<IEnumerable<Continent>> Continents()
         {
             return Ok(_coinsRepo.GetAllContinents());
         }
 
-        [HttpGet("GetCountriesByContinent")]
-        public ActionResult<IEnumerable<Country>> GetCountriesByContinent(int continentId)
-        {
-            return Ok(_coinsRepo.GetCountriesByContinentId(continentId));
-        }
-
-        [HttpGet("Countries/{countryId}")]
-        public ActionResult<Country> GetCountryById(int countryId)
-        {
-            var country = _coinsRepo.GetCountryById(countryId);
-
-            if (country != null)
-            {
-                return Ok(country);
-            }
-
-            return NotFound();
-        }
-
-        [HttpGet("Continents/{continentId}")]
+        [HttpGet("continents/{continentId}")]
         public ActionResult<Continent> GetContinentById(int continentId)
         {
             var continent = _coinsRepo.GetContinentById(continentId);
@@ -66,13 +42,20 @@ namespace CoinsManagerService.Controllers
             return NotFound();
         }
 
-        [HttpGet("GetPeriodsByCountry")]
-        public ActionResult<IEnumerable<Period>> GetPeriodsByCountry(int countryId)
+        [HttpGet("countries/{countryId}")]
+        public ActionResult<Country> GetCountryById(int countryId)
         {
-            return Ok(_coinsRepo.GetPeriodsByCountryId(countryId));
+            var country = _coinsRepo.GetCountryById(countryId);
+
+            if (country != null)
+            {
+                return Ok(country);
+            }
+
+            return NotFound();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("coins/{id}", Name = _getCoinEndpointName)]
         public ActionResult<CoinReadDto> GetCoinById(int id)
         {
             var coin = _coinsRepo.GetCoinById(id);
@@ -85,7 +68,25 @@ namespace CoinsManagerService.Controllers
             return NotFound();
         }
 
-        [HttpPost("Create")]
+        [HttpGet("continents/{continentId}/countries")]
+        public ActionResult<IEnumerable<Country>> GetCountriesByContinent(int continentId)
+        {
+            return Ok(_coinsRepo.GetCountriesByContinentId(continentId));
+        }
+
+        [HttpGet("countries/{countryId}/periods")]
+        public ActionResult<IEnumerable<Period>> GetPeriodsByCountry(int countryId)
+        {
+            return Ok(_coinsRepo.GetPeriodsByCountryId(countryId));
+        }
+
+        [HttpGet("periods/{periodId}/coins")]
+        public ActionResult<IEnumerable<CoinReadDto>> GetCoinsByPeriod(int periodId)
+        {
+            return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
+        }  
+
+        [HttpPost("coins")]
         public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
         {
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
@@ -95,8 +96,7 @@ namespace CoinsManagerService.Controllers
 
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 
-            return CreatedAtRoute(nameof(GetCoinById), new { Id = coinReadDto.Id }, coinReadDto);
+            return CreatedAtRoute(_getCoinEndpointName, new { Id = coinReadDto.Id }, coinReadDto);
         }
-
     }
 }

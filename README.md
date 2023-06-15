@@ -1,2 +1,2 @@
 # CoinsManagerService
-Storing, adding, displaying coins collection
+Manage coins collection data
