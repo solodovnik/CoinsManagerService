@@ -24,7 +24,7 @@ namespace CoinsManagerService
         {
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("CoinsConn")));
             services.AddScoped<ICoinsRepo, CoinsRepo>();
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddSwaggerGen(c =>
             {

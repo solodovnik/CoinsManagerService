@@ -9,7 +9,9 @@ namespace CoinsManagerService.Profiles
         public CoinsProfile()
         {
             CreateMap<Coin, CoinReadDto>();
+            CreateMap<Coin, CoinUpdateDto>();
             CreateMap<CoinCreateDto, Coin>();
+            CreateMap<CoinUpdateDto, Coin>();            
         }
     }
 }

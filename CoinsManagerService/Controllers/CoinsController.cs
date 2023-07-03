@@ -4,6 +4,7 @@ using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -91,6 +92,11 @@ namespace CoinsManagerService.Controllers
         [HttpPost("coins")]
         public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
         {
+            if (coinCreateDto == null)
+            {
+                return BadRequest();
+            }
+
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
 
             _coinsRepo.CreateCoin(coinModel);
@@ -99,6 +105,56 @@ namespace CoinsManagerService.Controllers
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 
             return CreatedAtRoute(_getCoinEndpointName, new { Id = coinReadDto.Id }, coinReadDto);
+        }
+
+        [HttpPut("coins/{coinId}")]
+        public ActionResult UpdateCoin(int coinId, CoinUpdateDto coinUpdateDto)
+        {
+            if (coinUpdateDto == null)
+            {
+                return BadRequest();
+            }
+
+            var coinToUpdate = _coinsRepo.GetCoinById(coinId);
+
+            if (coinToUpdate == null)
+            {
+                return NotFound($"Coin with id {coinId} was not found");
+            }
+
+            _mapper.Map(coinUpdateDto, coinToUpdate);
+            _coinsRepo.SaveChanges();
+
+            return NoContent();
+        }
+
+        [HttpPatch("coins/{coinId}")]
+        public ActionResult PartiallyUpdateCoin(int coinId, JsonPatchDocument<CoinUpdateDto> patchDocument)
+        {
+            var coinEntity = _coinsRepo.GetCoinById(coinId);
+
+            if (coinEntity == null)
+            {
+                return NotFound($"Coin with id {coinId} was not found");
+            }
+
+            var coinToPatch = _mapper.Map<CoinUpdateDto>(coinEntity);
+            patchDocument.ApplyTo(coinToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!TryValidateModel(coinToPatch))
+            {
+                return BadRequest(ModelState);
+            }
+
+            _mapper.Map(coinToPatch, coinEntity);
+            _coinsRepo.SaveChanges();
+
+            return NoContent();
         }
 
         [HttpDelete("coins/{coinId}")]
@@ -110,7 +166,7 @@ namespace CoinsManagerService.Controllers
 
                 if (coinToDelete == null)
                 {
-                    return NotFound($"Coin with id {coinId} not found");
+                    return NotFound($"Coin with id {coinId} was not found");
                 }
 
                 _coinsRepo.RemoveCoin(coinToDelete);
