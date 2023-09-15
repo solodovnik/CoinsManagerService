@@ -68,6 +68,14 @@ namespace CoinsManagerService
             app.UseAuthentication();
             app.UseAuthorization();
 
+            //app.UseExceptionHandler("/error");
+            app.UseExceptionHandler(
+          new ExceptionHandlerOptions()
+          {
+              AllowStatusCode404Response = true, // important!
+              ExceptionHandlingPath = "/error"
+          }
+      );
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

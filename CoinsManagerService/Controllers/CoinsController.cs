@@ -29,6 +29,7 @@ namespace CoinsManagerService.Controllers
         [HttpGet("continents")]
         public ActionResult<IEnumerable<Continent>> Continents()
         {
+            //throw new Exception("My exception");
             return Ok(_coinsRepo.GetAllContinents());
         }
 
