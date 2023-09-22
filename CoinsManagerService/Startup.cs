@@ -77,7 +77,7 @@ namespace CoinsManagerService
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("v1/swagger.json", "My API v1");
+                c.SwaggerEndpoint("v1/swagger.json", "Coins Manager API");
             });
 
             PrepDb.PrepareDatabase(app);
