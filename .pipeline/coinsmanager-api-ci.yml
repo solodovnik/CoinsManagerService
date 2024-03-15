@@ -17,7 +17,7 @@ stages:
       displayName: Restore
       inputs:
         command: 'restore'
-        projects: '**/*.sln'
+        projects: '**/CoinsManagerService/*.csproj'
         feedsToUse: 'select'
     - task: DotNetCoreCLI@2
       displayName: Build
