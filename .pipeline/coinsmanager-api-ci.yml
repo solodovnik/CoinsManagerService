@@ -29,10 +29,10 @@ stages:
         projectKey: 'vadsolodovnik_CoinsManagerAPI'
         projectName: 'CoinsManagerAPI'
     - task: DotNetCoreCLI@2
-      displayName: Build
       inputs:
-        command: 'build'
-        projects: '**/*.sln'
+        command: 'publish'
+        publishWebProjects: true
+        arguments: '-r linux-x64 --output $(build.artifactstagingdirectory)'
     - task: DotNetCoreCLI@2
       displayName: Unit test
       inputs:
