@@ -39,6 +39,12 @@ namespace CoinsManagerService.Data
             return _context.Coins.Where(x => x.Period == periodId);
         }
 
+        public Continent GetContinentByCountryId(int countryId)
+        {
+            var continentId = _context.Countries.FirstOrDefault(x => x.Id == countryId).Continent;
+            return GetContinentById(continentId);
+        }
+
         public Continent GetContinentById(int id)
         {
             return _context.Continents.FirstOrDefault(x => x.Id == id);
@@ -52,6 +58,17 @@ namespace CoinsManagerService.Data
         public Country GetCountryById(int id)
         {
             return _context.Countries.FirstOrDefault(x => x.Id == id);
+        }
+
+        public Country GetCountryByPeriodId(int periodId)
+        {
+            var countryId = _context.Periods.FirstOrDefault(x => x.Id == periodId).Country;
+            return GetCountryById(countryId);
+        }
+
+        public Period GetPeriodById(int id)
+        {
+            return _context.Periods.FirstOrDefault(x => x.Id == id);
         }
 
         public IEnumerable<Period> GetPeriodsByCountryId(int countryId)

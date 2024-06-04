@@ -1,4 +1,5 @@
 using CoinsManagerService.Data;
+using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +52,7 @@ namespace CoinsManagerService
                  });
             });
             services.AddMicrosoftIdentityWebApiAuthentication(Configuration);
+            services.AddSingleton<AzureBlobService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

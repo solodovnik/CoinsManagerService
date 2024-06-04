@@ -2,6 +2,7 @@
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
+using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
@@ -9,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace CoinsManagerService.Controllers
 {
@@ -19,12 +22,14 @@ namespace CoinsManagerService.Controllers
     {
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
+        private readonly IAzureBlobService _azureBlobService;
         private const string _getCoinEndpointName = "GetCoinEndpoint";
 
-        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo)
+        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo, AzureBlobService azureBlobService)
         {
             _mapper = mapper;
             _coinsRepo = coinsRepo;
+            _azureBlobService = azureBlobService;
         }
 
         [HttpGet("continents")]
@@ -119,17 +124,38 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(400)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<CoinReadDto> CreateCoin(CoinCreateDto coinCreateDto)
+        public async Task<ActionResult<CoinReadDto>> CreateCoin([FromForm] CoinCreateDto coinCreateDto)
         {
             if (coinCreateDto == null)
             {
                 return BadRequest();
             }
 
+            if (coinCreateDto.File == null || coinCreateDto.File.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period).Period1;
+            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period);
+            var countryName = country.Country1;
+            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Continent1;
+
+            var filePath = Path.Combine(continentName, countryName, periodName);
+            var fileName = $"{coinCreateDto.CatalogId}_{coinCreateDto.Nominal}{coinCreateDto.Currency}_{coinCreateDto.Year}.jpg";
+
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
+            coinModel.PictPreviewPath = Path.Combine(filePath, fileName);
 
             _coinsRepo.CreateCoin(coinModel);
             _coinsRepo.SaveChanges();
+
+            var containerName = "images";
+
+            using (var stream = coinCreateDto.File.OpenReadStream())
+            {
+                var url = await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
+            }
 
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace CoinsManagerService.Dtos
 {
@@ -22,6 +23,8 @@ namespace CoinsManagerService.Dtos
         public int Period { get; set; }
 
         [Required]
-        public string PictPreviewPath { get; set; }
+        public int CatalogId { get; set; }
+
+        public IFormFile File { get; set; }
     }
 }

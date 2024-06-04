@@ -9,7 +9,10 @@ namespace CoinsManagerService.Data
         
         IEnumerable<Continent> GetAllContinents();
         Country GetCountryById(int id);
+        Country GetCountryByPeriodId(int periodId);
+        Period GetPeriodById(int id);
         Continent GetContinentById(int id);
+        Continent GetContinentByCountryId(int countryId);
         Coin GetCoinById(int id);
         IEnumerable<Coin> GetCoinsByPeriodId(int periodId);
         IEnumerable<Country> GetCountriesByContinentId(int continentId);
