@@ -13,22 +13,35 @@ stages:
     pool:
       vmImage: ubuntu-latest
     steps:
+    - checkout: self
+      fetchDepth: 0
     - task: DotNetCoreCLI@2
       displayName: Restore
       inputs:
         command: 'restore'
         projects: '**/CoinsManagerService/*.csproj'
         feedsToUse: 'select'
-    - task: DotNetCoreCLI@2
-      displayName: Build
+    - task: SonarCloudPrepare@1
       inputs:
-        command: 'build'
-        projects: '**/*.sln'
+        SonarCloud: 'SonarCloud'
+        organization: 'vadsolodovnik'
+        scannerMode: 'MSBuild'
+        projectKey: 'vadsolodovnik_CoinsManagerAPI'
+        projectName: 'CoinsManagerAPI'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: true
+        arguments: '-r linux-x64 --output $(build.artifactstagingdirectory)'
     - task: DotNetCoreCLI@2
       displayName: Unit test
       inputs:
         command: 'test'
         projects: '**/*Tests/*.csproj'
+    - task: SonarCloudAnalyze@1    
+    - task: SonarCloudPublish@1
+      inputs:
+        pollingTimeoutSec: '300'
     - task: PublishBuildArtifacts@1
       displayName: Publish
       inputs:
