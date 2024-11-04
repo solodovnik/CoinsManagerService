@@ -25,7 +25,7 @@ namespace CoinsManagerService.Controllers
         private readonly IAzureBlobService _azureBlobService;
         private const string _getCoinEndpointName = "GetCoinEndpoint";
 
-        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo, AzureBlobService azureBlobService)
+        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo, IAzureBlobService azureBlobService)
         {
             _mapper = mapper;
             _coinsRepo = coinsRepo;

@@ -2,6 +2,7 @@
 using CoinsManagerService.Controllers;
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
+using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
@@ -17,7 +18,8 @@ namespace CoinsManagerService.Tests.Controller
             // Assign
             var mapperMock = new Mock<IMapper>();
             var coinsRepoMock = new Mock<ICoinsRepo>();
-            var controller = new CoinsController(mapperMock.Object, coinsRepoMock.Object);
+            var azureBlobServiceMock = new Mock<IAzureBlobService>();
+            var controller = new CoinsController(mapperMock.Object, coinsRepoMock.Object, azureBlobServiceMock.Object);
 
             // Act
             var result = controller.GetCoinsByPeriod(1);
