@@ -25,7 +25,7 @@ namespace CoinsManagerService.Tests.Controller
             var result = controller.GetCoinsByPeriod(1);
 
             // Assert
-            Assert.IsInstanceOf<ActionResult<IEnumerable<CoinReadDto>>>(result);
+            Assert.That(result, Is.InstanceOf<ActionResult<IEnumerable<CoinReadDto>>>());
         }
     }
 }

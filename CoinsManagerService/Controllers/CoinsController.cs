@@ -136,8 +136,13 @@ namespace CoinsManagerService.Controllers
                 return BadRequest("No file uploaded.");
             }
 
-            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period).Period1;
-            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period);
+            if (coinCreateDto.Period == null)
+            {
+                return BadRequest("Period can't be null");
+            }
+
+            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Period1;
+            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
             var countryName = country.Country1;
             var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Continent1;
 
@@ -154,7 +159,7 @@ namespace CoinsManagerService.Controllers
 
             using (var stream = coinCreateDto.File.OpenReadStream())
             {
-                var url = await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
+                await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
             }
 
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);

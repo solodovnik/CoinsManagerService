@@ -7,13 +7,12 @@ namespace CoinsManagerWebUI.Services
 {
     public class AzureBlobService : IAzureBlobService
     {
-        private readonly string _connectionString;
         private readonly BlobServiceClient _blobServiceClient;
 
         public AzureBlobService(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("AzureStorage");
-            _blobServiceClient = new BlobServiceClient(_connectionString);
+            var connectionString = configuration.GetConnectionString("AzureStorage");
+            _blobServiceClient = new BlobServiceClient(connectionString);
         }
 
         public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string containerName)

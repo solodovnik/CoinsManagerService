@@ -15,15 +15,15 @@ namespace CoinsManagerService.Dtos
         public string Year { get; set; }
 
         [Required]
-        public int Type { get; set; }
+        public int? Type { get; set; }
          
         public string CommemorativeName { get; set; }
 
         [Required]
-        public int Period { get; set; }
+        public int? Period { get; set; }
 
         [Required]
-        public int CatalogId { get; set; }
+        public int? CatalogId { get; set; }
 
         public IFormFile File { get; set; }
     }

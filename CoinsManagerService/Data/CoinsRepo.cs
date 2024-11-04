@@ -41,7 +41,12 @@ namespace CoinsManagerService.Data
 
         public Continent GetContinentByCountryId(int countryId)
         {
-            var continentId = _context.Countries.FirstOrDefault(x => x.Id == countryId).Continent;
+            var country = _context.Countries.FirstOrDefault(x => x.Id == countryId);
+            if (country == null)
+            {
+                throw new InvalidOperationException($"Country with id = {countryId} not found.");
+            }
+            var continentId = country.Continent;
             return GetContinentById(continentId);
         }
 
@@ -62,7 +67,12 @@ namespace CoinsManagerService.Data
 
         public Country GetCountryByPeriodId(int periodId)
         {
-            var countryId = _context.Periods.FirstOrDefault(x => x.Id == periodId).Country;
+            var period = _context.Periods.FirstOrDefault(x => x.Id == periodId);
+            if (period == null)
+            {
+                throw new InvalidOperationException($"Period with id = {periodId} not found.");
+            }
+            var countryId = period.Country;
             return GetCountryById(countryId);
         }
 
