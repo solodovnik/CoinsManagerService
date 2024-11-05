@@ -15,21 +15,21 @@ stages:
     steps:
     - checkout: self
       fetchDepth: 0
+    - task: SonarCloudPrepare@3
+      inputs:
+        scannerMode: 'dotnet'
+        SonarCloud: 'SonarCloud'
+        organization: 'vadsolodovnik'
+        projectKey: 'vadsolodovnik_CoinsManagerAPI'
+        projectName: 'CoinsManagerAPI'
+        extraProperties: |
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
     - task: DotNetCoreCLI@2
       displayName: Restore
       inputs:
         command: 'restore'
         projects: '**/CoinsManagerService/*.csproj'
         feedsToUse: 'select'
-    - task: SonarCloudPrepare@1
-      inputs:
-        SonarCloud: 'SonarCloud'
-        organization: 'vadsolodovnik'
-        scannerMode: 'MSBuild'
-        projectKey: 'vadsolodovnik_CoinsManagerAPI'
-        projectName: 'CoinsManagerAPI'
-        extraProperties: |
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml
     - task: DotNetCoreCLI@2
       inputs:
         command: 'publish'
@@ -40,14 +40,18 @@ stages:
       inputs:
         command: 'test'
         projects: '**/*Tests/*.csproj'
-        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml /p:CoverletOutputFormat=cobertura'
+        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml /p:CoverletOutputFormat=opencover'
+    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
+      displayName: 'Display Coverage Report Contents'
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(Build.SourcesDirectory)/TestResults'
         artifact: 'TestResults'
         publishLocation: 'pipeline'
-    - task: SonarCloudAnalyze@1    
-    - task: SonarCloudPublish@1
+    - task: SonarCloudAnalyze@3
+      inputs:
+        jdkversion: 'JAVA_HOME_17_X64'
+    - task: SonarCloudPublish@3
       inputs:
         pollingTimeoutSec: '300'
     - task: PublishBuildArtifacts@1
