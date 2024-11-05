@@ -41,6 +41,8 @@ stages:
         command: 'test'
         projects: '**/*Tests/*.csproj'
         arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml /p:CoverletOutputFormat=cobertura'
+    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml
+      displayName: 'Display Coverage Report Contents'
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: '$(Build.SourcesDirectory)/TestResults'
