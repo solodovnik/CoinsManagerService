@@ -15,12 +15,6 @@ stages:
     steps:
     - checkout: self
       fetchDepth: 0
-    - task: DotNetCoreCLI@2
-      displayName: Restore
-      inputs:
-        command: 'restore'
-        projects: '**/CoinsManagerService/*.csproj'
-        feedsToUse: 'select'
     - task: SonarCloudPrepare@3
       inputs:
         scannerMode: 'dotnet'
@@ -29,7 +23,13 @@ stages:
         projectKey: 'vadsolodovnik_CoinsManagerAPI'
         projectName: 'CoinsManagerAPI'
         extraProperties: |
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: 'restore'
+        projects: '**/CoinsManagerService/*.csproj'
+        feedsToUse: 'select'
     - task: DotNetCoreCLI@2
       inputs:
         command: 'publish'
@@ -40,8 +40,8 @@ stages:
       inputs:
         command: 'test'
         projects: '**/*Tests/*.csproj'
-        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml /p:CoverletOutputFormat=cobertura'
-    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml
+        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml /p:CoverletOutputFormat=opencover'
+    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
       displayName: 'Display Coverage Report Contents'
     - task: PublishPipelineArtifact@1
       inputs:
