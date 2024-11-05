@@ -28,6 +28,8 @@ stages:
         scannerMode: 'MSBuild'
         projectKey: 'vadsolodovnik_CoinsManagerAPI'
         projectName: 'CoinsManagerAPI'
+        extraProperties: |
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml
     - task: DotNetCoreCLI@2
       inputs:
         command: 'publish'
@@ -38,6 +40,12 @@ stages:
       inputs:
         command: 'test'
         projects: '**/*Tests/*.csproj'
+        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.cobertura.xml /p:CoverletOutputFormat=cobertura'
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.SourcesDirectory)/TestResults'
+        artifact: 'TestResults'
+        publishLocation: 'pipeline'
     - task: SonarCloudAnalyze@1    
     - task: SonarCloudPublish@1
       inputs:
