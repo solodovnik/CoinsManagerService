@@ -40,7 +40,13 @@ namespace CoinsManagerService.Tests.Data
             {
                 new Country
                 {
-                    Id = 7
+                    Id = 7,
+                    Continent = 1
+                },
+                new Country
+                {
+                    Id = 8,
+                    Continent = 1
                 }
             }.AsQueryable();
 
@@ -48,6 +54,7 @@ namespace CoinsManagerService.Tests.Data
             {
                 new Period
                 {
+                    Id = 1,
                     Country = 8
                 }
             }.AsQueryable();
@@ -119,6 +126,30 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
+        public void GetContinentByCountryIdShouldReturnExpectedData()
+        {
+            // Assign
+
+            // Act            
+            var output = _repo.GetContinentByCountryId(7);
+
+            // Assert
+            Assert.That(output, Is.Not.Null);
+            Assert.That(output.Id, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void GetContinentByCountryIdShouldThrowExceptionWhenCountryNotFound()
+        {
+            // Assign
+
+            // Act     
+
+            // Assert
+            Assert.Throws<InvalidOperationException>(() => _repo.GetContinentByCountryId(20));
+        }
+
+        [Test]
         public void GetContinentByIdShouldReturnExpectedData()
         {
             // Assign
@@ -132,6 +163,19 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
+        public void GetCountriesByContinentIdReturnExpectedData()
+        {
+            // Assign
+
+            // Act            
+            var output = _repo.GetCountriesByContinentId(1);
+
+            // Assert
+            Assert.That(output, Is.Not.Null);
+            Assert.That(output.Count, Is.EqualTo(2));
+        }
+
+        [Test]
         public void GetCountryByIdShouldReturnExpectedData()
         {
             // Assign
@@ -142,6 +186,43 @@ namespace CoinsManagerService.Tests.Data
             // Assert
             Assert.That(output, Is.Not.Null);
             Assert.That(output.Id, Is.EqualTo(7));
+        }
+
+        [Test]
+        public void GetCountryByPeriodIdShouldReturnExpectedData()
+        {
+            // Assign
+
+            // Act            
+            var output = _repo.GetCountryByPeriodId(1);
+
+            // Assert
+            Assert.That(output, Is.Not.Null);
+            Assert.That(output.Id, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void GetCountryByPeriodIdShouldThrowExceptionWhenPeriodNotFound()
+        {
+            // Assign
+
+            // Act        
+
+            // Assert
+            Assert.Throws<InvalidOperationException>(() => _repo.GetCountryByPeriodId(20));
+        }
+
+        [Test]
+        public void GetPeriodByIdShouldReturnExpectedData()
+        {
+            // Assign
+
+            // Act            
+            var output = _repo.GetPeriodById(1);
+
+            // Assert
+            Assert.That(output, Is.Not.Null);
+            Assert.That(output.Id, Is.EqualTo(1));
         }
 
         [Test]
@@ -182,6 +263,34 @@ namespace CoinsManagerService.Tests.Data
 
             // Assert            
             Assert.Throws<ArgumentNullException>(() => _repo.CreateCoin(null));
+        }
+
+        [Test]
+        public void RemoveCoinShouldRemoveCoinFromContext()
+        {
+            // Assign
+            Coin coin = new Coin
+            {
+                Id = 5,
+                Period = 6
+            };
+
+            // Act            
+            _repo.RemoveCoin(coin);
+
+            // Assert
+            _context.Verify(x => x.Coins.Remove(It.IsAny<Coin>()), Times.Once);
+        }
+
+        [Test]
+        public void RemoveCoinShouldThrowExceptionWhenCoinIsNull()
+        {
+            // Assign            
+
+            // Act  
+
+            // Assert            
+            Assert.Throws<ArgumentNullException>(() => _repo.RemoveCoin(null));
         }
     }
 }
