@@ -21,11 +21,11 @@ stages:
         command: 'restore'
         projects: '**/CoinsManagerService/*.csproj'
         feedsToUse: 'select'
-    - task: SonarCloudPrepare@1
+    - task: SonarCloudPrepare@3
       inputs:
+        scannerMode: 'dotnet'
         SonarCloud: 'SonarCloud'
         organization: 'vadsolodovnik'
-        scannerMode: 'MSBuild'
         projectKey: 'vadsolodovnik_CoinsManagerAPI'
         projectName: 'CoinsManagerAPI'
         extraProperties: |
@@ -48,8 +48,10 @@ stages:
         targetPath: '$(Build.SourcesDirectory)/TestResults'
         artifact: 'TestResults'
         publishLocation: 'pipeline'
-    - task: SonarCloudAnalyze@1    
-    - task: SonarCloudPublish@1
+    - task: SonarCloudAnalyze@3
+      inputs:
+        jdkversion: 'JAVA_HOME_17_X64'
+    - task: SonarCloudPublish@3
       inputs:
         pollingTimeoutSec: '300'
     - task: PublishBuildArtifacts@1
