@@ -12,8 +12,8 @@ namespace CoinsManagerService.Models
             Periods = new HashSet<Period>();
         }
 
-        public int Id { get; set; }
-        public string Country1 { get; set; }
+        public int Id { get; set; }      
+        public string Name { get; set; }
         public int Continent { get; set; }
 
         public virtual Continent ContinentNavigation { get; set; }

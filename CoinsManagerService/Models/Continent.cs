@@ -13,7 +13,7 @@ namespace CoinsManagerService.Models
         }
 
         public int Id { get; set; }
-        public string Continent1 { get; set; }
+        public string Name { get; set; }
 
         public virtual ICollection<Country> Countries { get; set; }
     }

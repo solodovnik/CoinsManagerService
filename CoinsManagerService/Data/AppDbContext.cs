@@ -67,18 +67,18 @@ namespace CoinsManagerService.Data
             {
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.Continent1)
+                entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasColumnName("Continent");
+                    .HasColumnName("Name");
             });
 
             modelBuilder.Entity<Country>(entity =>
             {
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.Country1)
+                entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasColumnName("Country");
+                    .HasColumnName("Name");
 
                 entity.HasOne(d => d.ContinentNavigation)
                     .WithMany(p => p.Countries)
@@ -91,9 +91,9 @@ namespace CoinsManagerService.Data
             {
                 entity.Property(e => e.Id).HasColumnName("ID");
 
-                entity.Property(e => e.Period1)
+                entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasColumnName("Period");
+                    .HasColumnName("Name");
 
                 entity.HasOne(d => d.CountryNavigation)
                     .WithMany(p => p.Periods)

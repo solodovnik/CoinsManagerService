@@ -141,10 +141,10 @@ namespace CoinsManagerService.Controllers
                 return BadRequest("Period can't be null");
             }
 
-            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Period1;
+            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Name;
             var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
-            var countryName = country.Country1;
-            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Continent1;
+            var countryName = country.Name;
+            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Name;
 
             var filePath = Path.Combine(continentName, countryName, periodName);
             var fileName = $"{coinCreateDto.CatalogId}_{coinCreateDto.Nominal}{coinCreateDto.Currency}_{coinCreateDto.Year}.jpg";
