@@ -12,7 +12,10 @@ namespace CoinsManagerWebUI.Services
         public AzureBlobService(IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("AzureStorage");
-            _blobServiceClient = new BlobServiceClient(connectionString);
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                _blobServiceClient = new BlobServiceClient(connectionString);
+            }
         }
 
         public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string containerName)

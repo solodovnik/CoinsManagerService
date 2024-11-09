@@ -52,7 +52,7 @@ namespace CoinsManagerService
                  });
             });
             services.AddMicrosoftIdentityWebApiAuthentication(Configuration);
-            services.AddSingleton<AzureBlobService>();
+            services.AddSingleton<IAzureBlobService, AzureBlobService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
