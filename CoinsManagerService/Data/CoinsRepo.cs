@@ -16,11 +16,7 @@ namespace CoinsManagerService.Data
 
         public void CreateCoin(Coin coin)
         {
-            if (coin == null)
-            {
-                throw new ArgumentNullException(nameof(coin));
-            }
-
+            ArgumentNullException.ThrowIfNull(coin);
             _context.Coins.Add(coin);
         }
 
@@ -88,11 +84,7 @@ namespace CoinsManagerService.Data
 
         public void RemoveCoin(Coin coin)
         {
-            if (coin == null)
-            {
-                throw new ArgumentNullException(nameof(coin));
-            }
-
+            ArgumentNullException.ThrowIfNull(coin);
             _context.Coins.Remove(coin);
         }
 
