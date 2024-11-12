@@ -34,7 +34,13 @@ stages:
       inputs:
         command: 'publish'
         publishWebProjects: true
-        arguments: '-r linux-x64 --output $(build.artifactstagingdirectory)'
+        arguments: '-r linux-x64 --output $(build.artifactstagingdirectory)/AppService'        
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish Azure Function'
+      inputs:
+        command: 'publish'
+        projects: '**/AzureFunctions/*.csproj'
+        arguments: '--output $(build.artifactstagingdirectory)/AzureFunction'    
     - task: DotNetCoreCLI@2
       displayName: Unit test
       inputs:
@@ -57,6 +63,12 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: Publish
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'drop'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/AppService'
+        ArtifactName: 'AppService'
+        publishLocation: 'Container'        
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Azure Function Artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/AzureFunction'
+        ArtifactName: 'AzureFunction'
         publishLocation: 'Container'
