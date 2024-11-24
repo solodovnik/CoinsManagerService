@@ -39,8 +39,8 @@ stages:
       displayName: 'Publish Azure Function'
       inputs:
         command: 'publish'
-        projects: '**/AzureFunctions/*.csproj'
-        arguments: '--output $(build.artifactstagingdirectory)/AzureFunction'    
+        projects: '**/AzureFunctions/CreateThumbnailFunction/*.csproj'
+        arguments: '--output $(build.artifactstagingdirectory)/CreateThumbnailFunction'    
     - task: DotNetCoreCLI@2
       displayName: Unit test
       inputs:
@@ -69,6 +69,6 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Azure Function Artifact'
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/AzureFunction'
-        ArtifactName: 'AzureFunction'
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/CreateThumbnailFunction'
+        ArtifactName: 'CreateThumbnailFunction'
         publishLocation: 'Container'
