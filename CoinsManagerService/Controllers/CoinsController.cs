@@ -7,10 +7,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CoinsManagerService.Controllers
@@ -23,13 +27,15 @@ namespace CoinsManagerService.Controllers
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
         private readonly IAzureBlobService _azureBlobService;
+        private readonly IConfiguration _configuration;
         private const string _getCoinEndpointName = "GetCoinEndpoint";
 
-        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo, IAzureBlobService azureBlobService)
+        public CoinsController(IMapper mapper, ICoinsRepo coinsRepo, IAzureBlobService azureBlobService, IConfiguration configuration)
         {
             _mapper = mapper;
             _coinsRepo = coinsRepo;
             _azureBlobService = azureBlobService;
+            _configuration = configuration;
         }
 
         [HttpGet("continents")]
@@ -126,44 +132,43 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(500)]
         public async Task<ActionResult<CoinReadDto>> CreateCoin([FromForm] CoinCreateDto coinCreateDto)
         {
+            string containerName = _configuration["ImagesContainerName"];
+
             if (coinCreateDto == null)
             {
-                return BadRequest();
+                return BadRequest("Coin data cannot be null.");
             }
 
-            if (coinCreateDto.File == null || coinCreateDto.File.Length == 0)
+            if (!ValidateCreateCoinRequest(coinCreateDto, out var errorMessage))
             {
-                return BadRequest("No file uploaded.");
+                return BadRequest(errorMessage);
             }
 
-            if (coinCreateDto.Period == null)
-            {
-                return BadRequest("Period can't be null");
-            }
-
-            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Name;
-            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
-            var countryName = country.Name;
-            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Name;
-
-            var filePath = Path.Combine(continentName, countryName, periodName);
+            var filePath = GetFilePath(coinCreateDto);
             var fileName = $"{coinCreateDto.CatalogId}_{coinCreateDto.Nominal}{coinCreateDto.Currency}_{coinCreateDto.Year}.jpg";
 
             var coinModel = _mapper.Map<Coin>(coinCreateDto);
             coinModel.PictPreviewPath = Path.Combine(filePath, fileName);
 
+            var obverseBase64 = await ConvertImageToBase64Async(coinCreateDto.ObverseImage);
+            var reverseBase64 = await ConvertImageToBase64Async(coinCreateDto.ReverseImage);
+
+            var mergedImageBase64 = await CallImageProcessingFunction(obverseBase64, reverseBase64);
+            if (string.IsNullOrEmpty(mergedImageBase64))
+            {
+                return StatusCode(500, "Failed to process images.");
+            }
+
+            // Convert merged image back to stream
+            var mergedImageBytes = Convert.FromBase64String(mergedImageBase64);
+            using var stream = new MemoryStream(mergedImageBytes);
+
+            await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
+
             _coinsRepo.CreateCoin(coinModel);
             _coinsRepo.SaveChanges();
 
-            var containerName = "images";
-
-            using (var stream = coinCreateDto.File.OpenReadStream())
-            {
-                await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
-            }
-
             var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
-
             return CreatedAtRoute(_getCoinEndpointName, new { Id = coinReadDto.Id }, coinReadDto);
         }
 
@@ -252,6 +257,60 @@ namespace CoinsManagerService.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     "Error occured while trying to delete data");
             }
+        }
+
+        private string GetFilePath(CoinCreateDto coinCreateDto)
+        {
+            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Name;
+            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
+            var countryName = country.Name;
+            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Name;
+            return Path.Combine(continentName, countryName, periodName);
+        }
+
+        private bool ValidateCreateCoinRequest(CoinCreateDto coinCreateDto, out string errorMessage)
+        {
+            if (coinCreateDto.ObverseImage == null || coinCreateDto.ObverseImage.Length == 0)
+            {
+                errorMessage = "No coin obverse image uploaded.";
+                return false;
+            }
+            if (coinCreateDto.ReverseImage == null || coinCreateDto.ReverseImage.Length == 0)
+            {
+                errorMessage = "No coin reverse image uploaded.";
+                return false;
+            }
+            if (coinCreateDto.Period == null)
+            {
+                errorMessage = "Period can't be null.";
+                return false;
+            }
+            errorMessage = null;
+            return true;
+        }
+
+        private async Task<string> ConvertImageToBase64Async(IFormFile image)
+        {
+            using var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            return Convert.ToBase64String(ms.ToArray());
+        }
+
+        private async Task<string> CallImageProcessingFunction(string obverseBase64, string reverseBase64)
+        {
+            var functionUrl = _configuration["AzureFunctions:ProcessImages:Url"];
+            var functionKey = _configuration["AzureFunctions:ProcessImages:FunctionKey"];
+
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("x-functions-key", functionKey);
+
+            var requestPayload = new { ObverseImageBase64 = obverseBase64, ReverseImageBase64 = reverseBase64 };
+            var response = await httpClient.PostAsJsonAsync(functionUrl, requestPayload);
+
+            if (!response.IsSuccessStatusCode) return null;
+          
+            var responseContent = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return responseContent.GetProperty("mergedImageBase64").GetString();
         }
     }
 }

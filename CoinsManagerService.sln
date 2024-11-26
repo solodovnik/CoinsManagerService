@@ -7,6 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoinsManagerService", "Coin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoinsManagerService.Tests", "CoinsManagerService.Tests\CoinsManagerService.Tests.csproj", "{AC0A5B3C-7DAD-4274-8F3A-5B215C9898B9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessImagesFunction", "AzureFunctions\ProcessImagesFunction.csproj", "{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CreateThumbnailFunction", "CoinsManagerCreateThumbnailFunction\CreateThumbnailFunction.csproj", "{A1E15248-C3DD-43E7-A4A7-DD12FF06758D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureFunctions", "AzureFunctions", "{E00BE0DC-3BB0-41B8-9954-4AB1635037A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,9 +27,21 @@ Global
 		{AC0A5B3C-7DAD-4274-8F3A-5B215C9898B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC0A5B3C-7DAD-4274-8F3A-5B215C9898B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC0A5B3C-7DAD-4274-8F3A-5B215C9898B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1E15248-C3DD-43E7-A4A7-DD12FF06758D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1E15248-C3DD-43E7-A4A7-DD12FF06758D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1E15248-C3DD-43E7-A4A7-DD12FF06758D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1E15248-C3DD-43E7-A4A7-DD12FF06758D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DEFE39BB-2E1F-4445-A404-4BBFCE6B1583} = {E00BE0DC-3BB0-41B8-9954-4AB1635037A0}
+		{A1E15248-C3DD-43E7-A4A7-DD12FF06758D} = {E00BE0DC-3BB0-41B8-9954-4AB1635037A0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EB0171F9-6013-4766-8252-E73412FB3F57}

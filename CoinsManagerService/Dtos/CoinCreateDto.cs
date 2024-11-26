@@ -25,6 +25,10 @@ namespace CoinsManagerService.Dtos
         [Required]
         public int? CatalogId { get; set; }
 
-        public IFormFile File { get; set; }
+        [Required]
+        public IFormFile ObverseImage { get; set; }
+
+        [Required]
+        public IFormFile ReverseImage { get; set; }
     }
 }
