@@ -15,6 +15,7 @@ namespace CoinsManagerService.Models
         public string CommemorativeName { get; set; }
         public int Period { get; set; }
         public string PictPreviewPath { get; set; }
+        public string CatalogId { get; set; }
 
         public virtual Period PeriodNavigation { get; set; }
         public virtual CoinType TypeNavigation { get; set; }

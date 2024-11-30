@@ -5,6 +5,7 @@ using CoinsManagerService.Dtos;
 using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -21,7 +22,13 @@ namespace CoinsManagerService.Tests.Controller
             var coinsRepoMock = new Mock<ICoinsRepo>();
             var azureBlobServiceMock = new Mock<IAzureBlobService>();
             var configurationMock = new Mock<IConfiguration>();
-            var controller = new CoinsController(mapperMock.Object, coinsRepoMock.Object, azureBlobServiceMock.Object, configurationMock.Object);
+            var loggerMock = new Mock<ILogger<CoinsController>>();
+            var controller = new CoinsController(
+                mapperMock.Object, 
+                coinsRepoMock.Object, 
+                azureBlobServiceMock.Object, 
+                configurationMock.Object,
+                loggerMock.Object);
 
             // Act
             var result = controller.GetCoinsByPeriod(1);

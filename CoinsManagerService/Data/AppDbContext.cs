@@ -44,6 +44,7 @@ namespace CoinsManagerService.Data
                     .HasMaxLength(50);
 
                 entity.Property(e => e.PictPreviewPath);
+                entity.Property(e => e.CatalogId).IsRequired();
 
                 entity.HasOne(d => d.PeriodNavigation)
                     .WithMany(p => p.Coins)
