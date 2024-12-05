@@ -15,11 +15,6 @@ stages:
     steps:
     - checkout: self
       fetchDepth: 0
-    - task: UseDotNet@2
-      inputs:
-        packageType: 'sdk'
-        version: '8.0.x'
-        installationPath: $(Agent.ToolsDirectory)/dotnet
     - task: SonarCloudPrepare@3
       inputs:
         scannerMode: 'dotnet'
@@ -33,7 +28,7 @@ stages:
       displayName: Restore
       inputs:
         command: 'restore'
-        projects: '**/CoinsManagerService/*.csproj'
+        projects: '**/*.csproj'
         feedsToUse: 'select'
     - task: DotNetCoreCLI@2
       inputs:
