@@ -25,6 +25,17 @@ stages:
         command: 'restore'
         projects: '**/*.csproj'
 
+    # Prepare SonarCloud analysis
+    - task: SonarCloudPrepare@3
+      inputs:
+        scannerMode: 'dotnet'
+        SonarCloud: 'SonarCloud'
+        organization: 'vadsolodovnik'
+        projectKey: 'vadsolodovnik_CoinsManagerAPI'
+        projectName: 'CoinsManagerAPI'
+        extraProperties: |
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
+
     # Build the solution
     - task: DotNetCoreCLI@2
       displayName: 'Build Solution'
