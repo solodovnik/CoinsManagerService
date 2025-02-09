@@ -47,7 +47,7 @@ stages:
     # Clean Artifacts directory
     - script: |
         rm -rf $(Build.ArtifactStagingDirectory)/*
-        displayName: 'Clean Artifact Staging Directory'
+      displayName: 'Clean Artifact Staging Directory'
 
     # Publish the App Service artifacts
     - task: DotNetCoreCLI@2
