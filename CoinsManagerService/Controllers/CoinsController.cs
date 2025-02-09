@@ -199,7 +199,7 @@ namespace CoinsManagerService.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while creating a coin.");
-                return StatusCode(500, "An internal server error occurred.");
+                return StatusCode(500, "An error occurred while creating a coin.");
             }
         }
 
