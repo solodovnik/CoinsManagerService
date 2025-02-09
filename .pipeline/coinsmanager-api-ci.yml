@@ -63,7 +63,7 @@ stages:
       inputs:
         command: 'publish'
         projects: '**/AzureFunctions/ProcessImagesFunction/*.csproj'
-        arguments: '-c Release --output $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
+        arguments: '-c Release --no-dependencies /p:GeneratePackageOnBuild=true /p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
 
     # Run Unit Tests with coverage
     - task: DotNetCoreCLI@2
