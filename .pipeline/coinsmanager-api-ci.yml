@@ -65,6 +65,7 @@ stages:
         projects: '**/AzureFunctions/ProcessImagesFunction/ProcessImagesFunction.csproj'
         arguments: '-c Release --output $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
 
+    # Publish Azure Function artifact
     - task: DotNetCoreCLI@2
       displayName: 'Publish Azure Function'
       inputs:
@@ -72,8 +73,15 @@ stages:
         projects: '**/AzureFunctions/ProcessImagesFunction/ProcessImagesFunction.csproj'
         arguments: '-c Release --output $(Build.ArtifactStagingDirectory)/ProcessImagesFunction --no-restore --no-build'
 
-    - script: ls -R $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction
-      displayName: 'List Published Azure Function Files'
+    # Zip the Azure Function output
+    - task: ArchiveFiles@2
+      displayName: 'Create ZIP for Azure Function'
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction.zip'
+        replaceExistingArchive: true
     
     # Run Unit Tests with coverage
     - task: DotNetCoreCLI@2
@@ -112,10 +120,10 @@ stages:
         ArtifactName: 'AppService'
         publishLocation: 'Container'
 
-    # Publish Azure Function artifact
+    # Publish the Azure Function ZIP artifact
     - task: PublishBuildArtifacts@1
-      displayName: 'Publish Azure Function Artifact'
+      displayName: 'Publish Azure Function ZIP Artifact'
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
-        ArtifactName: 'ProcessImagesFunction'
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction.zip'
+        artifactName: 'ProcessImagesFunction'
         publishLocation: 'Container'
