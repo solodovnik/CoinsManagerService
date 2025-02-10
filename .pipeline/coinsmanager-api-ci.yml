@@ -54,7 +54,7 @@ stages:
       displayName: 'Publish App Service'
       inputs:
         command: 'publish'
-        projects: '**/CoinsManagerService/*.csproj'
+        projects: '**/CoinsManagerService/CoinsManagerService.csproj'
         arguments: '-c Release -r linux-x64 --output $(Build.ArtifactStagingDirectory)/AppService'
 
     # Publish the Azure Function artifact (ensure it's isolated)
@@ -62,8 +62,8 @@ stages:
       displayName: 'Publish Azure Function'
       inputs:
         command: 'publish'
-        projects: '**/AzureFunctions/ProcessImagesFunction/*.csproj'
-        arguments: '-c Release --no-dependencies /p:GeneratePackageOnBuild=true /p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
+        projects: '**/AzureFunctions/ProcessImagesFunction/ProcessImagesFunction.csproj'
+        arguments: '-c Release -r linux-x64 --output $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
 
     # Run Unit Tests with coverage
     - task: DotNetCoreCLI@2
