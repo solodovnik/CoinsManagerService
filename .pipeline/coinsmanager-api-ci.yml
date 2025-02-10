@@ -63,8 +63,11 @@ stages:
       inputs:
         command: 'publish'
         projects: '**/AzureFunctions/ProcessImagesFunction/ProcessImagesFunction.csproj'
-        arguments: '-c Release -r linux-x64 --output $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
+        arguments: '-c Release --output $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction'
 
+    - script: ls -R $(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction
+      displayName: 'List Published Azure Function Files'
+    
     # Run Unit Tests with coverage
     - task: DotNetCoreCLI@2
       displayName: 'Run Unit Tests'
