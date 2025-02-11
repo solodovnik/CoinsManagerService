@@ -297,7 +297,7 @@ namespace CoinsManagerService.Controllers
             var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
             var countryName = country.Name;
             var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Name;
-            return Path.Combine(continentName, countryName, periodName);
+            return $"/{Path.Combine(continentName, countryName, periodName)}";
         }
 
         private bool ValidateCreateCoinRequest(CoinCreateDto coinCreateDto, out string errorMessage)

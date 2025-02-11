@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Threading.Tasks;
@@ -19,12 +20,21 @@ namespace CoinsManagerWebUI.Services
         }
 
         public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string containerName)
-        {
+        {           
             var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             await containerClient.CreateIfNotExistsAsync();
 
             var blobClient = containerClient.GetBlobClient(fileName);
-            await blobClient.UploadAsync(fileStream, overwrite: true);
+
+            var blobHttpHeaders = new BlobHttpHeaders
+            {
+                ContentType = "image/jpeg"
+            };
+
+            await blobClient.UploadAsync(fileStream, new BlobUploadOptions
+            {
+                HttpHeaders = blobHttpHeaders
+            });
 
             return blobClient.Uri.ToString();
         }
