@@ -34,7 +34,10 @@ stages:
         projectKey: 'vadsolodovnik_CoinsManagerAPI'
         projectName: 'CoinsManagerAPI'
         extraProperties: |
+          sonar.exclusions=CoinsManagerService/Migrations/**
+          sonar.coverage.exclusions=CoinsManagerService/Migrations/**
           sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
+
 
     # Build the solution
     - task: DotNetCoreCLI@2
