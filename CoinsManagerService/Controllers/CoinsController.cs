@@ -50,9 +50,9 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<Continent>> Continents()
+        public ActionResult<IEnumerable<ContinentReadDto>> GetContinents()
         {
-            return Ok(_coinsRepo.GetAllContinents());
+            return Ok(_mapper.Map<IEnumerable<ContinentReadDto>>(_coinsRepo.GetAllContinents()));
         }
 
         [HttpGet("continents/{continentId}")]
@@ -60,13 +60,13 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<Continent> GetContinentById(int continentId)
+        public ActionResult<ContinentReadDto> GetContinentById(int continentId)
         {
             var continent = _coinsRepo.GetContinentById(continentId);
 
             if (continent != null)
             {
-                return Ok(continent);
+                return Ok(_mapper.Map<ContinentReadDto>(continent));
             }
 
             return NotFound();
@@ -77,13 +77,13 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<Country> GetCountryById(int countryId)
+        public ActionResult<CountryReadDto> GetCountryById(int countryId)
         {
             var country = _coinsRepo.GetCountryById(countryId);
 
             if (country != null)
             {
-                return Ok(country);
+                return Ok(_mapper.Map<CountryReadDto>(country));
             }
 
             return NotFound();
@@ -110,18 +110,18 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<Country>> GetCountriesByContinent(int continentId)
+        public ActionResult<IEnumerable<CountryReadDto>> GetCountriesByContinent(int continentId)
         {
-            return Ok(_coinsRepo.GetCountriesByContinentId(continentId));
+            return Ok(_mapper.Map<IEnumerable<CountryReadDto>>(_coinsRepo.GetCountriesByContinentId(continentId)));
         }
 
         [HttpGet("countries/{countryId}/periods")]
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<Period>> GetPeriodsByCountry(int countryId)
+        public ActionResult<IEnumerable<PeriodReadDto>> GetPeriodsByCountry(int countryId)
         {
-            return Ok(_coinsRepo.GetPeriodsByCountryId(countryId));
+            return Ok(_mapper.Map<IEnumerable<PeriodReadDto>>(_coinsRepo.GetPeriodsByCountryId(countryId)));
         }
 
         [HttpGet("periods/{periodId}/coins")]
