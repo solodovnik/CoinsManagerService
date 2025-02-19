@@ -2,6 +2,7 @@
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
+using CoinsManagerService.Services;
 using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +29,7 @@ namespace CoinsManagerService.Controllers
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
         private readonly IAzureBlobService _azureBlobService;
+        private readonly IAzureFunctionService _azureFunctionService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<CoinsController> _logger;
         private const string _getCoinEndpointName = "GetCoinEndpoint";
@@ -35,13 +37,15 @@ namespace CoinsManagerService.Controllers
         public CoinsController(
             IMapper mapper, 
             ICoinsRepo coinsRepo, 
-            IAzureBlobService azureBlobService, 
+            IAzureBlobService azureBlobService,
+            IAzureFunctionService azureFunctionService,
             IConfiguration configuration,
             ILogger<CoinsController> logger)
         {
             _mapper = mapper;
             _coinsRepo = coinsRepo;
             _azureBlobService = azureBlobService;
+            _azureFunctionService = azureFunctionService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -333,11 +337,8 @@ namespace CoinsManagerService.Controllers
             var functionUrl = _configuration["AzureFunctions:ProcessImages:Url"];
             var functionKey = _configuration["AzureFunctions:ProcessImages:FunctionKey"];
 
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("x-functions-key", functionKey);
-
-            var requestPayload = new { ObverseImageBase64 = obverseBase64, ReverseImageBase64 = reverseBase64 };
-            var response = await httpClient.PostAsJsonAsync(functionUrl, requestPayload);
+            var requestPayload = new { ObverseImageBase64 = obverseBase64, ReverseImageBase64 = reverseBase64 };            
+            var response = await _azureFunctionService.CallFunctionAsync(functionUrl, functionKey, requestPayload);
 
             if (!response.IsSuccessStatusCode) return null;
           

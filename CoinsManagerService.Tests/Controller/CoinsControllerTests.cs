@@ -3,12 +3,19 @@ using CoinsManagerService.Controllers;
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
+using CoinsManagerService.Services;
+using CoinsManagerWebUI.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 
 namespace CoinsManagerService.Tests.Controller
 {
@@ -18,6 +25,8 @@ namespace CoinsManagerService.Tests.Controller
         private Mock<ILogger<CoinsController>> _mockLogger;
         private Mock<IConfiguration> _mockConfig;
         private Mock<IMapper> _mockMapper;
+        private Mock<IAzureBlobService> _mockAzureBlobStorage;
+        private Mock<IAzureFunctionService> _mockAzureFunctionService;
         private CoinsController _controller;
 
         [SetUp]
@@ -27,7 +36,9 @@ namespace CoinsManagerService.Tests.Controller
             _mockLogger = new Mock<ILogger<CoinsController>>();
             _mockConfig = new Mock<IConfiguration>();
             _mockMapper = new Mock<IMapper>();
-            _controller = new CoinsController(_mockMapper.Object, _mockRepo.Object, null, _mockConfig.Object, _mockLogger.Object);
+            _mockAzureBlobStorage = new Mock<IAzureBlobService>();
+            _mockAzureFunctionService = new Mock<IAzureFunctionService>();
+            _controller = new CoinsController(_mockMapper.Object, _mockRepo.Object, _mockAzureBlobStorage.Object, _mockAzureFunctionService.Object, _mockConfig.Object, _mockLogger.Object);
         }
 
         [Test]
@@ -164,7 +175,7 @@ namespace CoinsManagerService.Tests.Controller
         public void GetCoinById_NonExistingId_ReturnsNotFound()
         {
             // Arrange
-            int coinId = 999; // ID that doesn't exist
+            int coinId = 999;
             _mockRepo.Setup(repo => repo.GetCoinById(coinId)).Returns((Coin)null);
 
             // Act
@@ -207,7 +218,6 @@ namespace CoinsManagerService.Tests.Controller
             Assert.That(okResult.Value, Is.InstanceOf<IEnumerable<CountryReadDto>>());
             var actualCountries = okResult.Value as IEnumerable<CountryReadDto>;
             Assert.That(actualCountries, Is.EqualTo(expectedCountriesDto));
-            // Verify mocks were used correctly
             _mockRepo.Verify(repo => repo.GetCountriesByContinentId(continentId), Times.Once);
             _mockMapper.Verify(m => m.Map<IEnumerable<CountryReadDto>>(countries), Times.Once);
         }
@@ -268,7 +278,6 @@ namespace CoinsManagerService.Tests.Controller
             // Assert
             Assert.That(okResult, Is.Not.Null);
             Assert.That(okResult.Value, Is.InstanceOf<IEnumerable<PeriodReadDto>>());
-
             var actualPeriods = okResult.Value as IEnumerable<PeriodReadDto>;
             Assert.That(actualPeriods, Is.EqualTo(expectedPeriodsDto));
             _mockRepo.Verify(repo => repo.GetPeriodsByCountryId(countryId), Times.Once);
@@ -361,6 +370,50 @@ namespace CoinsManagerService.Tests.Controller
             Assert.That(actualCoins, Is.Empty);
             _mockRepo.Verify(repo => repo.GetCoinsByPeriodId(periodId), Times.Once);
             _mockMapper.Verify(m => m.Map<IEnumerable<CoinReadDto>>(coins), Times.Once);
+        }
+
+        [Test]
+        public void CreatCoin_ReturnsCoin()
+        {
+            // Arrange
+            var fileMock = new Mock<IFormFile>();
+            fileMock.Setup(m => m.Length).Returns(10);
+            var coinCreateDto = new CoinCreateDto { ObverseImage = fileMock.Object, ReverseImage = fileMock.Object, Period = 1 };
+            var coinReadDto = new CoinReadDto { Id = 1 };
+            var coinModel = new Coin { Id =1, Nominal = "1" };
+
+            var jsonResponse = """
+{
+    "mergedImageBase64": "ZGVjb2RlZHN0cmluZw=="
+}
+""";
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            };
+
+            _mockRepo.Setup(m => m.GetPeriodById(1)).Returns(new Period { Name = "1900-2000" });
+            _mockRepo.Setup(m => m.GetCountryByPeriodId(1)).Returns(new Country { Id = 1, Name = "France" });
+            _mockRepo.Setup(m => m.GetContinentByCountryId(1)).Returns(new Continent { Name = "Europe" });
+            _mockMapper.Setup(m => m.Map<Coin>(coinCreateDto)).Returns(coinModel);
+            _mockMapper.Setup(m => m.Map<CoinReadDto>(coinModel)).Returns(coinReadDto);
+            _mockAzureFunctionService.Setup(m => m.CallFunctionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>())).ReturnsAsync(httpResponse);
+
+
+            // Act
+            var result = _controller.CreateCoin(coinCreateDto);
+            var okResult = result.Result as ActionResult<CoinReadDto>;
+
+            // Assert
+            Assert.That(okResult, Is.Not.Null);
+            _mockRepo.Verify(repo => repo.CreateCoin(coinModel), Times.Once);
+            _mockMapper.Verify(m => m.Map<Coin>(coinCreateDto), Times.Once);
+            _mockMapper.Verify(m => m.Map<CoinReadDto>(coinModel), Times.Once);
+            var createdAtRouteResult = okResult.Result as CreatedAtRouteResult;
+            Assert.That(createdAtRouteResult, Is.Not.Null);
+            var actualCoin = createdAtRouteResult.Value as CoinReadDto;
+            Assert.That(actualCoin, Is.Not.Null);
+            Assert.That(actualCoin, Is.EqualTo(coinReadDto));
         }
     }
 }

@@ -1,4 +1,5 @@
 using CoinsManagerService.Data;
+using CoinsManagerService.Services;
 using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
+builder.Services.AddHttpClient<AzureFunctionService>();
 
 var app = builder.Build();
 
