@@ -1,24 +1,25 @@
 ﻿using CoinsManagerService.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CoinsManagerService.Data
 {
     public interface ICoinsRepo
     {
-        bool SaveChanges();
+        Task<bool> SaveChangesAsync();
         
-        IEnumerable<Continent> GetAllContinents();
-        Country GetCountryById(int id);
-        Country GetCountryByPeriodId(int periodId);
-        Period GetPeriodById(int id);
-        Continent GetContinentById(int id);
-        Continent GetContinentByCountryId(int countryId);
-        Coin GetCoinById(int id);
-        IEnumerable<Coin> GetCoinsByPeriodId(int periodId);
-        IEnumerable<Country> GetCountriesByContinentId(int continentId);
-        IEnumerable<Period> GetPeriodsByCountryId(int countryId);       
+        Task<IEnumerable<Continent>> GetAllContinentsAsync();
+        Task<Country> GetCountryByIdAsync(int id);
+        Task<Country> GetCountryByPeriodIdAsync(int periodId);
+        Task<Period> GetPeriodByIdAsync(int id);
+        Task<Continent> GetContinentByIdAsync(int id);
+        Task<Continent> GetContinentByCountryIdAsync(int countryId);
+        Task<Coin> GetCoinByIdAsync(int id);
+        Task<IEnumerable<Coin>> GetCoinsByPeriodIdAsync(int periodId);
+        Task<IEnumerable<Country>> GetCountriesByContinentIdAsync(int continentId);
+        Task<IEnumerable<Period>> GetPeriodsByCountryIdAsync(int countryId);       
 
-        void CreateCoin(Coin coin);
-        void RemoveCoin(Coin coin);
+        Task CreateCoin(Coin coin);
+        Task RemoveCoin(Coin coin);
     }
 }

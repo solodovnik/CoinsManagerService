@@ -14,7 +14,6 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -54,9 +53,12 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<ContinentReadDto>> GetContinents()
+        public async Task<ActionResult> GetContinents()
         {
-            return Ok(_mapper.Map<IEnumerable<ContinentReadDto>>(_coinsRepo.GetAllContinents()));
+            var continents = await _coinsRepo.GetAllContinentsAsync();
+            var continentDtos = _mapper.Map<IEnumerable<ContinentReadDto>>(continents);
+
+            return Ok(continentDtos);
         }
 
         [HttpGet("continents/{continentId}")]
@@ -64,9 +66,9 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<ContinentReadDto> GetContinentById(int continentId)
+        public async Task<ActionResult<ContinentReadDto>> GetContinentByIdAsync(int continentId)
         {
-            var continent = _coinsRepo.GetContinentById(continentId);
+            var continent = await _coinsRepo.GetContinentByIdAsync(continentId);
 
             if (continent != null)
             {
@@ -81,9 +83,9 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<CountryReadDto> GetCountryById(int countryId)
+        public async Task<ActionResult<CountryReadDto>> GetCountryById(int countryId)
         {
-            var country = _coinsRepo.GetCountryById(countryId);
+            var country = await _coinsRepo.GetCountryByIdAsync(countryId);
 
             if (country != null)
             {
@@ -98,9 +100,9 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<CoinReadDto> GetCoinById(int id)
+        public async Task<ActionResult<CoinReadDto>> GetCoinById(int id)
         {
-            var coin = _coinsRepo.GetCoinById(id);
+            var coin = await _coinsRepo.GetCoinByIdAsync(id);
 
             if (coin != null)
             {
@@ -114,27 +116,36 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<CountryReadDto>> GetCountriesByContinent(int continentId)
-        {
-            return Ok(_mapper.Map<IEnumerable<CountryReadDto>>(_coinsRepo.GetCountriesByContinentId(continentId)));
+        public async Task<ActionResult<IEnumerable<CountryReadDto>>> GetCountriesByContinent(int continentId)
+        {            
+            var countries = await _coinsRepo.GetCountriesByContinentIdAsync(continentId);
+            var countriesDto = _mapper.Map<IEnumerable<CountryReadDto>>(countries);
+
+            return Ok(countriesDto);
         }
 
         [HttpGet("countries/{countryId}/periods")]
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<PeriodReadDto>> GetPeriodsByCountry(int countryId)
+        public async Task<ActionResult<IEnumerable<PeriodReadDto>>> GetPeriodsByCountry(int countryId)
         {
-            return Ok(_mapper.Map<IEnumerable<PeriodReadDto>>(_coinsRepo.GetPeriodsByCountryId(countryId)));
+            var periods = await _coinsRepo.GetPeriodsByCountryIdAsync(countryId);
+            var periodsDto = _mapper.Map<IEnumerable<PeriodReadDto>>(periods);
+
+            return Ok(periodsDto);
         }
 
         [HttpGet("periods/{periodId}/coins")]
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
         [SwaggerResponse(500)]
-        public ActionResult<IEnumerable<CoinReadDto>> GetCoinsByPeriod(int periodId)
+        public async Task<ActionResult<IEnumerable<CoinReadDto>>> GetCoinsByPeriod(int periodId)
         {
-            return Ok(_mapper.Map<IEnumerable<CoinReadDto>>(_coinsRepo.GetCoinsByPeriodId(periodId)));
+            var coins = await _coinsRepo.GetCoinsByPeriodIdAsync(periodId);
+            var coinsDto = _mapper.Map<IEnumerable<CoinReadDto>>(coins);
+
+            return Ok(coinsDto);
         }  
 
         [HttpPost("coins")]
@@ -160,7 +171,7 @@ namespace CoinsManagerService.Controllers
 
             try
             {
-                var filePath = GetFilePath(coinCreateDto);
+                var filePath = await GetFilePathAsync(coinCreateDto);
                 var fileName = $"{coinCreateDto.CatalogId}_{coinCreateDto.Nominal}{coinCreateDto.Currency}_{coinCreateDto.Year}.jpg";
 
                 var coinModel = _mapper.Map<Coin>(coinCreateDto);
@@ -192,8 +203,7 @@ namespace CoinsManagerService.Controllers
 
                 // Save coin to repository
                 _logger.LogInformation("Creating coin in repository.");
-                _coinsRepo.CreateCoin(coinModel);
-                _coinsRepo.SaveChanges();
+                await _coinsRepo.CreateCoin(coinModel);
 
                 var coinReadDto = _mapper.Map<CoinReadDto>(coinModel);
 
@@ -214,14 +224,14 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult UpdateCoin(int coinId, CoinUpdateDto coinUpdateDto)
+        public async Task<ActionResult> UpdateCoin(int coinId, CoinUpdateDto coinUpdateDto)
         {
             if (coinUpdateDto == null)
             {
                 return BadRequest();
             }
 
-            var coinToUpdate = _coinsRepo.GetCoinById(coinId);
+            var coinToUpdate = await _coinsRepo.GetCoinByIdAsync(coinId);
 
             if (coinToUpdate == null)
             {
@@ -229,7 +239,7 @@ namespace CoinsManagerService.Controllers
             }
 
             _mapper.Map(coinUpdateDto, coinToUpdate);
-            _coinsRepo.SaveChanges();
+            await _coinsRepo.SaveChangesAsync();
 
             return NoContent();
         }
@@ -240,9 +250,9 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult PartiallyUpdateCoin(int coinId, JsonPatchDocument<CoinUpdateDto> patchDocument)
+        public async Task<ActionResult> PartiallyUpdateCoin(int coinId, JsonPatchDocument<CoinUpdateDto> patchDocument)
         {
-            var coinEntity = _coinsRepo.GetCoinById(coinId);
+            var coinEntity = await _coinsRepo.GetCoinByIdAsync(coinId);
 
             if (coinEntity == null)
             {
@@ -263,7 +273,7 @@ namespace CoinsManagerService.Controllers
             }
 
             _mapper.Map(coinToPatch, coinEntity);
-            _coinsRepo.SaveChanges();
+            await _coinsRepo.SaveChangesAsync();
 
             return NoContent();
         }
@@ -273,19 +283,18 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(401)]
         [SwaggerResponse(404)]
         [SwaggerResponse(500)]
-        public ActionResult<CoinReadDto> DeleteCoin(int coinId)
+        public async Task<ActionResult<CoinReadDto>> DeleteCoin(int coinId)
         {
             try
             {
-                var coinToDelete = _coinsRepo.GetCoinById(coinId);
+                var coinToDelete = await _coinsRepo.GetCoinByIdAsync(coinId);
 
                 if (coinToDelete == null)
                 {
                     return NotFound($"Coin with id {coinId} was not found");
                 }
 
-                _coinsRepo.RemoveCoin(coinToDelete);
-                _coinsRepo.SaveChanges();
+                await _coinsRepo.RemoveCoin(coinToDelete);
                 return Ok();
             }
             catch (Exception)
@@ -295,13 +304,12 @@ namespace CoinsManagerService.Controllers
             }
         }
 
-        private string GetFilePath(CoinCreateDto coinCreateDto)
+        private async Task<string> GetFilePathAsync(CoinCreateDto coinCreateDto)
         {
-            var periodName = _coinsRepo.GetPeriodById(coinCreateDto.Period ?? 0).Name;
-            var country = _coinsRepo.GetCountryByPeriodId(coinCreateDto.Period ?? 0);
-            var countryName = country.Name;
-            var continentName = _coinsRepo.GetContinentByCountryId(country.Id).Name;
-            return $"/{Path.Combine(continentName, countryName, periodName)}";
+            var period = await _coinsRepo.GetPeriodByIdAsync(coinCreateDto.Period ?? 0);
+            var country = await _coinsRepo.GetCountryByPeriodIdAsync(coinCreateDto.Period ?? 0);            
+            var continent = await _coinsRepo.GetContinentByCountryIdAsync(country.Id);
+            return $"/{Path.Combine(continent.Name, country.Name, period.Name)}";
         }
 
         private bool ValidateCreateCoinRequest(CoinCreateDto coinCreateDto, out string errorMessage)

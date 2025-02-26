@@ -1,98 +1,43 @@
 using CoinsManagerService.Data;
 using CoinsManagerService.Models;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CoinsManagerService.Tests.Data
 {
     public class Tests
     {
         private CoinsRepo _repo;
-        private Mock<AppDbContext> _context;
+        private AppDbContext _dbContext;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            _context = new Mock<AppDbContext>();
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: "TestDb")
+                .Options;
 
-            var continentData = new List<Continent>
-            {
-                new Continent
-                {
-                    Id = 1
-                }
-            }.AsQueryable();
+            _dbContext = new AppDbContext(options);
+            _dbContext.Continents.Add(new Continent { Id = 1, Name = "Africa" });
+            _dbContext.Coins.Add(new Coin { Id = 5, Period = 6, CatalogId = "1", Currency = "USD", Year = "1999", Nominal = "1" });
+            _dbContext.Countries.Add(new Country { Id = 7, Continent = 1, Name = "France" });
+            _dbContext.Countries.Add(new Country { Id = 8, Continent = 1, Name = "Germany" });
+            _dbContext.Periods.Add(new Period { Id = 1, Country = 8, Name = "2000-2020 Republic" });
+            _dbContext.SaveChanges();
 
-            var coinData = new List<Coin>
-            {
-                new Coin
-                {
-                    Id = 5,
-                    Period = 6
-                }
-            }.AsQueryable();
-
-            var countryData = new List<Country>
-            {
-                new Country
-                {
-                    Id = 7,
-                    Continent = 1
-                },
-                new Country
-                {
-                    Id = 8,
-                    Continent = 1
-                }
-            }.AsQueryable();
-
-            var periodData = new List<Period>
-            {
-                new Period
-                {
-                    Id = 1,
-                    Country = 8
-                }
-            }.AsQueryable();
-
-            var dbSetContinentsMock = new Mock<DbSet<Continent>>();
-            dbSetContinentsMock.As<IQueryable<Continent>>().Setup(m => m.Provider).Returns(continentData.Provider);
-            dbSetContinentsMock.As<IQueryable<Continent>>().Setup(m => m.Expression).Returns(continentData.Expression);
-            dbSetContinentsMock.As<IQueryable<Continent>>().Setup(m => m.GetEnumerator()).Returns(() => continentData.GetEnumerator());
-            _context.Setup(x => x.Continents).Returns(dbSetContinentsMock.Object);
-
-            var dbSetCoinsMock = new Mock<DbSet<Coin>>();
-            dbSetCoinsMock.As<IQueryable<Coin>>().Setup(m => m.Provider).Returns(coinData.Provider);
-            dbSetCoinsMock.As<IQueryable<Coin>>().Setup(m => m.Expression).Returns(coinData.Expression);
-            dbSetCoinsMock.As<IQueryable<Coin>>().Setup(m => m.GetEnumerator()).Returns(() => coinData.GetEnumerator());
-            _context.Setup(x => x.Coins).Returns(dbSetCoinsMock.Object);
-
-            var dbSetCountriesMock = new Mock<DbSet<Country>>();
-            dbSetCountriesMock.As<IQueryable<Country>>().Setup(m => m.Provider).Returns(countryData.Provider);
-            dbSetCountriesMock.As<IQueryable<Country>>().Setup(m => m.Expression).Returns(countryData.Expression);
-            dbSetCountriesMock.As<IQueryable<Country>>().Setup(m => m.GetEnumerator()).Returns(() => countryData.GetEnumerator());
-            _context.Setup(x => x.Countries).Returns(dbSetCountriesMock.Object);
-
-            var dbSetPeriodsMock = new Mock<DbSet<Period>>();
-            dbSetPeriodsMock.As<IQueryable<Period>>().Setup(m => m.Provider).Returns(periodData.Provider);
-            dbSetPeriodsMock.As<IQueryable<Period>>().Setup(m => m.Expression).Returns(periodData.Expression);
-            dbSetPeriodsMock.As<IQueryable<Period>>().Setup(m => m.GetEnumerator()).Returns(() => periodData.GetEnumerator());
-            _context.Setup(x => x.Periods).Returns(dbSetPeriodsMock.Object);
-
-            _repo = new CoinsRepo(_context.Object);
+            _repo = new CoinsRepo(_dbContext);
         }
 
         [Test]
-        public void GetAllContinentsShouldReturnExpectedData()
+        public async Task GetAllContinents_ReturnsExpectedData()
         {
             // Assign             
 
             // Act            
-            var output = _repo.GetAllContinents();
+            var output = await _repo.GetAllContinentsAsync();
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -100,12 +45,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCoinByIdShouldReturnExpectedData()
+        public async Task GetCoinById_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetCoinById(5);
+            var output = await _repo.GetCoinByIdAsync(5);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -113,12 +58,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCoinsByPeriodShouldReturnExpectedData()
+        public async Task GetCoinsByPeriod_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetCoinsByPeriodId(6);
+            var output = await _repo.GetCoinsByPeriodIdAsync(6);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -126,12 +71,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetContinentByCountryIdShouldReturnExpectedData()
+        public async Task GetContinentByCountryId_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetContinentByCountryId(7);
+            var output = await _repo.GetContinentByCountryIdAsync(7);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -139,23 +84,23 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetContinentByCountryIdShouldThrowExceptionWhenCountryNotFound()
+        public void GetContinentByCountryId_ThrowsException_WhenCountryNotFound()
         {
             // Assign
 
             // Act     
 
             // Assert
-            Assert.Throws<InvalidOperationException>(() => _repo.GetContinentByCountryId(20));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await _repo.GetContinentByCountryIdAsync(20));
         }
 
         [Test]
-        public void GetContinentByIdShouldReturnExpectedData()
+        public async Task GetContinentById_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetContinentById(1);
+            var output = await _repo.GetContinentByIdAsync(1);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -163,12 +108,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCountriesByContinentIdReturnExpectedData()
+        public async Task GetCountriesByContinentId_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetCountriesByContinentId(1);
+            var output = await _repo.GetCountriesByContinentIdAsync(1);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -176,12 +121,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCountryByIdShouldReturnExpectedData()
+        public async Task GetCountryById_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetCountryById(7);
+            var output = await _repo.GetCountryByIdAsync(7);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -189,12 +134,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCountryByPeriodIdShouldReturnExpectedData()
+        public async Task GetCountryByPeriodId_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetCountryByPeriodId(1);
+            var output = await _repo.GetCountryByPeriodIdAsync(1);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -202,23 +147,23 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetCountryByPeriodIdShouldThrowExceptionWhenPeriodNotFound()
+        public void GetCountryByPeriodId_ThrowsException_WhenPeriodNotFound()
         {
             // Assign
 
             // Act        
 
             // Assert
-            Assert.Throws<InvalidOperationException>(() => _repo.GetCountryByPeriodId(20));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await _repo.GetCountryByPeriodIdAsync(20));
         }
 
         [Test]
-        public void GetPeriodByIdShouldReturnExpectedData()
+        public async Task GetPeriodById_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetPeriodById(1);
+            var output = await _repo.GetPeriodByIdAsync(1);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -226,12 +171,12 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void GetPeriodsByCountryIdShouldReturnExpectedData()
+        public async Task GetPeriodsByCountryId_ReturnsExpectedData()
         {
             // Assign
 
             // Act            
-            var output = _repo.GetPeriodsByCountryId(8);
+            var output = await _repo.GetPeriodsByCountryIdAsync(8);
 
             // Assert
             Assert.That(output, Is.Not.Null);
@@ -239,58 +184,55 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public void CreateCoinShouldAddCoinToContext()
+        public async Task CreateCoin_AddsCoinToContext()
         {
             // Assign
-            Coin coin = new Coin
-            {
-                Id = 10
-            }; 
+            var coin = new Coin { Id = 10, CatalogId = "10", Nominal = "10", Year = "2010", Currency = "USD" };
 
             // Act            
-            _repo.CreateCoin(coin);
+            await _repo.CreateCoin(coin);
 
-            // Assert
-            _context.Verify(x => x.Coins.Add(It.IsAny<Coin>()), Times.Once);
+            // Assert: Check if coin exists in the in-memory database
+            var savedCoin = _dbContext.Coins.Find(10);
+            Assert.That(savedCoin, Is.Not.Null);
         }
 
+
         [Test]
-        public void CreateCoinShouldThrowExceptionWhenCoinIsNull()
+        public async Task CreateCoin_ThrowsException_WhenCoinIsNull()
         {
             // Assign            
 
             // Act  
 
             // Assert            
-            Assert.Throws<ArgumentNullException>(() => _repo.CreateCoin(null));
+            Assert.ThrowsAsync<ArgumentNullException>(async () => await _repo.CreateCoin(null));
         }
 
         [Test]
-        public void RemoveCoinShouldRemoveCoinFromContext()
+        public async Task RemoveCoin_RemovesCoinFromContext()
         {
             // Assign
-            Coin coin = new Coin
-            {
-                Id = 5,
-                Period = 6
-            };
+            var coin = new Coin { Id = 20, CatalogId = "20", Nominal = "20", Year = "2020", Currency = "USD" };
 
-            // Act            
-            _repo.RemoveCoin(coin);
+            // Act
+            await _repo.CreateCoin(coin);
+            await _repo.RemoveCoin(coin);
 
             // Assert
-            _context.Verify(x => x.Coins.Remove(It.IsAny<Coin>()), Times.Once);
+            var removedCoin = _dbContext.Coins.Find(20);
+            Assert.That(removedCoin, Is.Null);
         }
 
         [Test]
-        public void RemoveCoinShouldThrowExceptionWhenCoinIsNull()
+        public async Task RemoveCoin_ThrowsException_WhenCoinIsNull()
         {
             // Assign            
 
             // Act  
 
             // Assert            
-            Assert.Throws<ArgumentNullException>(() => _repo.RemoveCoin(null));
+            Assert.ThrowsAsync<ArgumentNullException>(async () => await _repo.RemoveCoin(null));
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using CoinsManagerService.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CoinsManagerService.Data
 {
@@ -14,83 +16,85 @@ namespace CoinsManagerService.Data
             _context = context;
         }
 
-        public void CreateCoin(Coin coin)
+        public async Task CreateCoin(Coin coin)
         {
             ArgumentNullException.ThrowIfNull(coin);
             _context.Coins.Add(coin);
+            await _context.SaveChangesAsync();
         }
 
-        public IEnumerable<Continent> GetAllContinents()
+        public async Task<IEnumerable<Continent>> GetAllContinentsAsync()
         {
-            return _context.Continents;
+            return await _context.Continents.ToListAsync();
         }
 
-        public Coin GetCoinById(int id)
+        public async Task<Coin> GetCoinByIdAsync(int id)
         {
-            return _context.Coins.FirstOrDefault(x => x.Id == id);
+            return await _context.Coins.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public IEnumerable<Coin> GetCoinsByPeriodId(int periodId)
+        public async Task<IEnumerable<Coin>> GetCoinsByPeriodIdAsync(int periodId)
         {
-            return _context.Coins.Where(x => x.Period == periodId);
+            return await _context.Coins.Where(x => x.Period == periodId).ToListAsync();
         }
 
-        public Continent GetContinentByCountryId(int countryId)
+        public async Task<Continent> GetContinentByCountryIdAsync(int countryId)
         {
-            var country = _context.Countries.FirstOrDefault(x => x.Id == countryId);
+            var country = await _context.Countries.FirstOrDefaultAsync(x => x.Id == countryId);
             if (country == null)
             {
                 throw new InvalidOperationException($"Country with id = {countryId} not found.");
             }
             var continentId = country.Continent;
-            return GetContinentById(continentId);
+            return await GetContinentByIdAsync(continentId);
         }
 
-        public Continent GetContinentById(int id)
+        public async Task<Continent> GetContinentByIdAsync(int id)
         {
-            return _context.Continents.FirstOrDefault(x => x.Id == id);
+            return await _context.Continents.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public IEnumerable<Country> GetCountriesByContinentId(int continentId)
+        public async Task<IEnumerable<Country>> GetCountriesByContinentIdAsync(int continentId)
         {
-            return _context.Countries.Where(x => x.Continent == continentId);
+            return await _context.Countries.Where(x => x.Continent == continentId).ToListAsync();
         }
 
-        public Country GetCountryById(int id)
+        public async Task<Country> GetCountryByIdAsync(int id)
         {
-            return _context.Countries.FirstOrDefault(x => x.Id == id);
+            return await _context.Countries.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public Country GetCountryByPeriodId(int periodId)
+        public async Task<Country> GetCountryByPeriodIdAsync(int periodId)
         {
-            var period = _context.Periods.FirstOrDefault(x => x.Id == periodId);
+            var period = await _context.Periods.FirstOrDefaultAsync(x => x.Id == periodId);
             if (period == null)
             {
                 throw new InvalidOperationException($"Period with id = {periodId} not found.");
             }
             var countryId = period.Country;
-            return GetCountryById(countryId);
+            return await GetCountryByIdAsync(countryId);
         }
 
-        public Period GetPeriodById(int id)
+        public async Task<Period> GetPeriodByIdAsync(int id)
         {
-            return _context.Periods.FirstOrDefault(x => x.Id == id);
+            return await _context.Periods.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public IEnumerable<Period> GetPeriodsByCountryId(int countryId)
+        public async Task<IEnumerable<Period>> GetPeriodsByCountryIdAsync(int countryId)
         {
-            return _context.Periods.Where(x => x.Country == countryId);
+            return await _context.Periods.Where(x => x.Country == countryId).ToListAsync();
         }
 
-        public void RemoveCoin(Coin coin)
+        public async Task RemoveCoin(Coin coin)
         {
             ArgumentNullException.ThrowIfNull(coin);
             _context.Coins.Remove(coin);
+            await _context.SaveChangesAsync();
         }
 
-        public bool SaveChanges()
+        public async Task<bool> SaveChangesAsync()
         {
-            return (_context.SaveChanges() >= 0);
+            return (await _context.SaveChangesAsync() >= 0);
         }
     }
 }
