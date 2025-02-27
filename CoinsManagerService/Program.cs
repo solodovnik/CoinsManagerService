@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using CoinsManagerService.Data;
 using CoinsManagerService.Services;
 using CoinsManagerWebUI.Services;
@@ -52,6 +53,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
+builder.Services.AddSingleton(new BlobServiceClient(builder.Configuration.GetConnectionString("AzureStorage")));
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 builder.Services.AddHttpClient<AzureFunctionService>();
 

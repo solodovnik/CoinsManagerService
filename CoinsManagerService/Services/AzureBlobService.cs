@@ -1,6 +1,5 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -10,13 +9,9 @@ namespace CoinsManagerWebUI.Services
     {
         private readonly BlobServiceClient _blobServiceClient;
 
-        public AzureBlobService(IConfiguration configuration)
+        public AzureBlobService(BlobServiceClient blobServiceClient)
         {
-            var connectionString = configuration.GetConnectionString("AzureStorage");
-            if (!string.IsNullOrEmpty(connectionString))
-            {
-                _blobServiceClient = new BlobServiceClient(connectionString);
-            }
+            _blobServiceClient = blobServiceClient;
         }
 
         public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string containerName)
