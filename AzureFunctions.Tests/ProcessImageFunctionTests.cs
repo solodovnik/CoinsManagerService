@@ -10,7 +10,7 @@ using ImageMagick;
 
 namespace AzureFunctions.Tests
 {
-    [TestFixture]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class ProcessImagesFunctionTests
     {
         private Mock<ILogger> _mockLogger;

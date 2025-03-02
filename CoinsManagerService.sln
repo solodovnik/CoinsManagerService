@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CreateThumbnailFunction", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessImagesFunction", "AzureFunctions\ProcessImagesFunction\ProcessImagesFunction.csproj", "{22EA30B1-E91E-4C97-87A0-8BC8E3260603}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureFunctions.Tests", "AzureFunction.cs\AzureFunctions.Tests.csproj", "{8020BC1D-3C18-458F-A027-35183D110947}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureFunctions.Tests", "AzureFunctions.Tests\AzureFunctions.Tests.csproj", "{5E2B97EB-AF18-451E-86ED-812340AD4631}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,10 +37,10 @@ Global
 		{22EA30B1-E91E-4C97-87A0-8BC8E3260603}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22EA30B1-E91E-4C97-87A0-8BC8E3260603}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22EA30B1-E91E-4C97-87A0-8BC8E3260603}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8020BC1D-3C18-458F-A027-35183D110947}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8020BC1D-3C18-458F-A027-35183D110947}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8020BC1D-3C18-458F-A027-35183D110947}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8020BC1D-3C18-458F-A027-35183D110947}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E2B97EB-AF18-451E-86ED-812340AD4631}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E2B97EB-AF18-451E-86ED-812340AD4631}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E2B97EB-AF18-451E-86ED-812340AD4631}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E2B97EB-AF18-451E-86ED-812340AD4631}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

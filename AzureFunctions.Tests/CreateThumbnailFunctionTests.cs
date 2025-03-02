@@ -6,7 +6,7 @@ using SixLabors.ImageSharp;
 
 namespace AzureFunctions.Tests
 {
-    [TestFixture]
+    [TestFixture, Parallelizable(ParallelScope.None)]
     public class CreateThumbnailFunctionTests
     {
         private Mock<ILogger<CreateThumbnailFunction>> _loggerMock;
