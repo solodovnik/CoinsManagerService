@@ -1,7 +1,6 @@
 using Azure.Storage.Blobs;
 using CoinsManagerService.Data;
 using CoinsManagerService.Services;
-using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
 
-namespace CoinsManagerWebUI.Services
+namespace CoinsManagerService.Services
 {
     public interface IAzureBlobService
     {

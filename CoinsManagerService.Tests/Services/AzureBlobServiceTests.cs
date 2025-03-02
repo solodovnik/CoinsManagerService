@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using CoinsManagerWebUI.Services;
 using Moq;
 using NUnit.Framework;
+using CoinsManagerService.Services;
 
-namespace CoinsManagerWebUI.Tests.Services
+namespace CoinsManagerService.Tests.Services
 {
     [TestFixture]
     public class AzureBlobServiceTests

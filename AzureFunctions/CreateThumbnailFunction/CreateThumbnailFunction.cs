@@ -4,18 +4,20 @@ using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace CoinsManagerCreateThumbnailFunction
+namespace AzureFunctions
 {
-    public class Function
+    public class CreateThumbnailFunction
     {
-        private readonly ILogger<Function> _logger;
+        private readonly ILogger<CreateThumbnailFunction> _logger;
+        private readonly BlobContainerClient _blobContainerClient;
 
-        public Function(ILogger<Function> logger)
+        public CreateThumbnailFunction(ILogger<CreateThumbnailFunction> logger, BlobContainerClient blobContainerClient)
         {
             _logger = logger;
+            _blobContainerClient = blobContainerClient;
         }
 
-        [Function(nameof(Function))]
+        [Function(nameof(CreateThumbnailFunction))]
         public async Task Run([BlobTrigger("%ImagesContainerName%/{name}", Connection = "BlobStorageTrigger")] Stream stream, string name)
         {
             _logger.LogInformation($"Processing blob: {name}");
@@ -39,10 +41,7 @@ namespace CoinsManagerCreateThumbnailFunction
                         outputStream.Position = 0;
 
                         // Upload the thumbnail to the thumbnails container
-                        var blobClient = new BlobClient(
-                            Environment.GetEnvironmentVariable("BlobStorageTrigger"),
-                            thumbnailsContainerName,
-                            name);
+                        var blobClient = _blobContainerClient.GetBlobClient(name);
 
                         await blobClient.UploadAsync(outputStream, overwrite: true);
                     }
@@ -50,7 +49,7 @@ namespace CoinsManagerCreateThumbnailFunction
 
                 _logger.LogInformation($"Thumbnail created: {thumbnailPath}");
             }
-            catch (SixLabors.ImageSharp.UnknownImageFormatException uex)
+            catch (UnknownImageFormatException uex)
             {
                 _logger.LogError($"Failed to decode image: {name}. {uex.Message}");
                 return;

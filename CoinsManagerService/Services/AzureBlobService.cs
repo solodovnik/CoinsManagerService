@@ -3,7 +3,7 @@ using Azure.Storage.Blobs.Models;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace CoinsManagerWebUI.Services
+namespace CoinsManagerService.Services
 {
     public class AzureBlobService : IAzureBlobService
     {

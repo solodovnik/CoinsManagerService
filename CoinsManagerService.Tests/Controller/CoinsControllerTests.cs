@@ -4,7 +4,6 @@ using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
 using CoinsManagerService.Services;
-using CoinsManagerWebUI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -95,7 +94,7 @@ namespace CoinsManagerService.Tests.Controller
         {
             // Arrange
             int continentId = 999;
-            _mockRepo.Setup(repo => repo.GetContinentByIdAsync(continentId)).ReturnsAsync((Continent)null);
+            _mockRepo.Setup(repo => repo.GetContinentByIdAsync(continentId)).ReturnsAsync(null as Continent);
 
             // Act
             var result = await _controller.GetContinentByIdAsync(continentId);
@@ -135,7 +134,7 @@ namespace CoinsManagerService.Tests.Controller
         {
             // Arrange
             int countryId = 999; // ID that doesn't exist
-            _mockRepo.Setup(repo => repo.GetCountryByIdAsync(countryId)).ReturnsAsync((Country)null);
+            _mockRepo.Setup(repo => repo.GetCountryByIdAsync(countryId)).ReturnsAsync(null as Country);
 
             // Act
             var result = await _controller.GetCountryById(countryId);
@@ -176,7 +175,7 @@ namespace CoinsManagerService.Tests.Controller
         {
             // Arrange
             int coinId = 999;
-            _mockRepo.Setup(repo => repo.GetCoinByIdAsync(coinId)).ReturnsAsync((Coin)null);
+            _mockRepo.Setup(repo => repo.GetCoinByIdAsync(coinId)).ReturnsAsync(null as Coin);
 
             // Act
             var result = await _controller.GetCoinById(coinId);
