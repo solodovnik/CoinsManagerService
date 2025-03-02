@@ -36,7 +36,7 @@ stages:
         extraProperties: |
           sonar.exclusions=CoinsManagerService/Migrations/**
           sonar.coverage.exclusions=CoinsManagerService/Migrations/**
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/Merged/coverage.opencover.xml
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverageMerged.opencover.xml
 
     # Build the solution
     - task: DotNetCoreCLI@2
@@ -85,27 +85,27 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction.zip'
         replaceExistingArchive: true
     
-    # Run AzureFunctions Unit Tests with coverage
     - task: DotNetCoreCLI@2
-      displayName: 'Run Unit Tests for AzureFunctions'
-      inputs:
-        command: 'test'
-        projects: '**/AzureFunctions.Tests/*.csproj'
-        arguments: >
-          /p:CollectCoverage=true 
-          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/AzureFunctions.coverage.xml 
-          /p:CoverletOutputFormat=opencover
-
-    # Run CoinsManagerService Unit Tests with coverage
-    - task: DotNetCoreCLI@2
-      displayName: 'Run Unit Tests for CoinsManagerService'
+      displayName: 'Run Unit Tests - CoinsManagerService'
       inputs:
         command: 'test'
         projects: '**/CoinsManagerService.Tests/*.csproj'
         arguments: >
-          /p:CollectCoverage=true 
-          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/CoinsManagerService.coverage.xml 
+          /p:CollectCoverage=true
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverageCoinsManagerService.opencover.xml
           /p:CoverletOutputFormat=opencover
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Unit Tests - AzureFunctions.Tests'
+      inputs:
+        command: 'test'
+        projects: '**/AzureFunctions.Tests/*.csproj'
+        arguments: >
+          /p:CollectCoverage=true
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverageMerged.opencover.xml
+          /p:CoverletOutputFormat=opencover
+          /p:MergeWith=$(Build.SourcesDirectory)/TestResults/coverageCoinsManagerService.opencover.xml
+
 
     # Merge Coverage Reports
     - script: |
@@ -114,7 +114,7 @@ stages:
       displayName: 'Merge Coverage Reports'
 
     # Display coverage report
-    - script: cat $(Build.SourcesDirectory)/TestResults/Merged/coverage.opencover.xml
+    - script: cat $(Build.SourcesDirectory)/TestResults/coverageMerged.opencover.xml
       displayName: 'Display Coverage Report Contents'
 
     # Publish test results
