@@ -105,17 +105,12 @@ stages:
         arguments: >
           /p:CollectCoverage=true 
           /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/CoinsManagerService.coverage.xml 
-          /p:CoverletOutputFormat=opencover    
-
-    # Install Report Generator
-    - script: dotnet tool install --global dotnet-reportgenerator-globaltool
-      displayName: 'Install ReportGenerator'
+          /p:CoverletOutputFormat=opencover
 
     # Merge Coverage Reports
     - script: |
-        reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/*.coverage.xml \
-                        -targetdir:$(Build.SourcesDirectory)/TestResults/Merged \
-                        -reporttypes:opencover
+        dotnet tool install --global coverlet.console
+        coverlet $(Build.SourcesDirectory)/TestResults/AzureFunctions/ --merge-with $(Build.SourcesDirectory)/TestResults/CoinsManagerService/ --output $(Build.SourcesDirectory)/TestResults/Merged/coverage.opencover.xml --format opencover
       displayName: 'Merge Coverage Reports'
 
     # Display coverage report
