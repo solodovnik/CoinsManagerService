@@ -25,7 +25,7 @@ namespace CoinsManagerService.Tests
         }
 
         [Test]
-        public async Task CallFunctionAsync_ShouldReturnHttpResponse_WhenCalled(HttpRequestMessage req)
+        public async Task CallFunctionAsync_ShouldReturnHttpResponse_WhenCalled()
         {
             // Arrange
             var functionUrl = "https://example.com/function";
