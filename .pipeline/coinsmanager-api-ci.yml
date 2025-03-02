@@ -119,7 +119,7 @@ stages:
       displayName: 'Merge Coverage Reports'
 
     # Display coverage report
-    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
+    - script: cat $(Build.SourcesDirectory)/TestResults/Merged/coverage.opencover.xml
       displayName: 'Display Coverage Report Contents'
 
     # Publish test results
