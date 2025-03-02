@@ -94,6 +94,9 @@ stages:
           /p:CollectCoverage=true
           /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverageCoinsManagerService.opencover.xml
           /p:CoverletOutputFormat=opencover
+          
+    - script: cat $(Build.SourcesDirectory)/TestResults/coverageCoinsManagerService.opencover.xml
+      displayName: 'Show CoinsManagerService Coverage Report'
 
     - task: DotNetCoreCLI@2
       displayName: 'Run Unit Tests - AzureFunctions.Tests'
