@@ -36,8 +36,7 @@ stages:
         extraProperties: |
           sonar.exclusions=CoinsManagerService/Migrations/**
           sonar.coverage.exclusions=CoinsManagerService/Migrations/**
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
-
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/Merged/coverage.opencover.xml
 
     # Build the solution
     - task: DotNetCoreCLI@2
@@ -86,13 +85,38 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction.zip'
         replaceExistingArchive: true
     
-    # Run Unit Tests with coverage
+    # Run AzureFunctions Unit Tests with coverage
     - task: DotNetCoreCLI@2
-      displayName: 'Run Unit Tests'
+      displayName: 'Run Unit Tests for AzureFunctions'
       inputs:
         command: 'test'
-        projects: '**/*Tests/*.csproj'
-        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml /p:CoverletOutputFormat=opencover'
+        projects: '**/AzureFunctions.Tests/*.csproj'
+        arguments: >
+          /p:CollectCoverage=true 
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/AzureFunctions.coverage.xml 
+          /p:CoverletOutputFormat=opencover
+
+    # Run CoinsManagerService Unit Tests with coverage
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Unit Tests for CoinsManagerService'
+      inputs:
+        command: 'test'
+        projects: '**/CoinsManagerService.Tests/*.csproj'
+        arguments: >
+          /p:CollectCoverage=true 
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/CoinsManagerService.coverage.xml 
+          /p:CoverletOutputFormat=opencover    
+
+    # Install Report Generator
+    - script: dotnet tool install --global dotnet-reportgenerator-globaltool
+      displayName: 'Install ReportGenerator'
+
+    # Merge Coverage Reports
+    - script: |
+        reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/*.coverage.xml \
+                        -targetdir:$(Build.SourcesDirectory)/TestResults/Merged \
+                        -reporttypes:opencover
+      displayName: 'Merge Coverage Reports'
 
     # Display coverage report
     - script: cat $(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
