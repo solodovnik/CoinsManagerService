@@ -36,7 +36,7 @@ stages:
         extraProperties: |
           sonar.exclusions=CoinsManagerService/Migrations/**
           sonar.coverage.exclusions=CoinsManagerService/Migrations/**
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/MergedReport/Cobertura.xml
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/*.opencover.xml
 
     # Build the solution
     - task: DotNetCoreCLI@2
@@ -104,21 +104,6 @@ stages:
           /p:CollectCoverage=true
           /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/AzureFunctions.opencover.xml
           /p:CoverletOutputFormat=opencover
-
-    - script: |
-        dotnet tool install -g dotnet-reportgenerator-globaltool
-      displayName: 'Install ReportGenerator'
-      
-    - script: |
-        reportgenerator \
-          -reports:$(Build.SourcesDirectory)/TestResults/*.opencover.xml \
-          -targetdir:$(Build.SourcesDirectory)/TestResults/MergedReport \
-          -reporttypes:Cobertura
-      displayName: 'Merge Coverage Reports'
-
-    # Display coverage report
-    - script: cat $(Build.SourcesDirectory)/TestResults/MergedReport/Cobertura.xml
-      displayName: 'Display Coverage Report Contents'
 
     # Publish test results
     - task: PublishPipelineArtifact@1
