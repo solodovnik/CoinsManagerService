@@ -7,7 +7,7 @@ using NUnit.Framework;
 using CoinsManagerService.Services;
 using System.Threading;
 
-namespace CoinsManagerService.Tests
+namespace CoinsManagerService.Tests.Services
 {
     [TestFixture]
     public class AzureFunctionServiceTests

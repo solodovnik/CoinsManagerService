@@ -5,11 +5,13 @@ using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
 using CoinsManagerService.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -26,7 +28,7 @@ namespace CoinsManagerService.Tests.Controller
         private Mock<IMapper> _mockMapper;
         private Mock<IAzureBlobService> _mockAzureBlobStorage;
         private Mock<IAzureFunctionService> _mockAzureFunctionService;
-        private CoinsController _controller;
+        private Mock<CoinsController> _mockController;
 
         [SetUp]
         public void Setup()
@@ -37,7 +39,14 @@ namespace CoinsManagerService.Tests.Controller
             _mockMapper = new Mock<IMapper>();
             _mockAzureBlobStorage = new Mock<IAzureBlobService>();
             _mockAzureFunctionService = new Mock<IAzureFunctionService>();
-            _controller = new CoinsController(_mockMapper.Object, _mockRepo.Object, _mockAzureBlobStorage.Object, _mockAzureFunctionService.Object, _mockConfig.Object, _mockLogger.Object);
+            _mockController = new Mock<CoinsController>(
+                _mockMapper.Object,
+                _mockRepo.Object,
+                _mockAzureBlobStorage.Object,
+                _mockAzureFunctionService.Object,
+                _mockConfig.Object,
+                _mockLogger.Object) { CallBase = true }; ;
+            _mockController.Setup(c => c.TryValidateModel(It.IsAny<object>())).Returns(true);
         }
 
         [Test]
@@ -52,7 +61,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedContinentsDto);
 
             // Act
-            var result = _controller.GetContinents();
+            var result = _mockController.Object.GetContinents();
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -77,7 +86,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedContinentDto);
 
             // Act
-            var result = await _controller.GetContinentByIdAsync(continentId);
+            var result = await _mockController.Object.GetContinentByIdAsync(continentId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -97,7 +106,7 @@ namespace CoinsManagerService.Tests.Controller
             _mockRepo.Setup(repo => repo.GetContinentByIdAsync(continentId)).ReturnsAsync(null as Continent);
 
             // Act
-            var result = await _controller.GetContinentByIdAsync(continentId);
+            var result = await _mockController.Object.GetContinentByIdAsync(continentId);
 
             // Assert
             Assert.That(result.Result, Is.InstanceOf<NotFoundResult>());
@@ -111,13 +120,13 @@ namespace CoinsManagerService.Tests.Controller
             int countryId = 1;
             var country = new Country { Id = countryId, Name = "France" };
             _mockRepo.Setup(repo => repo.GetCountryByIdAsync(countryId)).ReturnsAsync(country);
-            var expectedCountryDto = new CountryReadDto { Id = countryId, Name = "France" };
+            var expectedCountryDto = new CountryReadDto { Id = countryId, Name = "France", Continent = 1 };
             _mockMapper
                 .Setup(m => m.Map<CountryReadDto>(country))
                 .Returns(expectedCountryDto);
 
             // Act
-            var result = await _controller.GetCountryById(countryId);
+            var result = await _mockController.Object.GetCountryById(countryId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -137,7 +146,7 @@ namespace CoinsManagerService.Tests.Controller
             _mockRepo.Setup(repo => repo.GetCountryByIdAsync(countryId)).ReturnsAsync(null as Country);
 
             // Act
-            var result = await _controller.GetCountryById(countryId);
+            var result = await _mockController.Object.GetCountryById(countryId);
 
             // Assert
             Assert.That(result.Result, Is.InstanceOf<NotFoundResult>());
@@ -157,7 +166,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedCoinDto);
 
             // Act
-            var result = await _controller.GetCoinById(coinId);
+            var result = await _mockController.Object.GetCoinById(coinId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -178,7 +187,7 @@ namespace CoinsManagerService.Tests.Controller
             _mockRepo.Setup(repo => repo.GetCoinByIdAsync(coinId)).ReturnsAsync(null as Coin);
 
             // Act
-            var result = await _controller.GetCoinById(coinId);
+            var result = await _mockController.Object.GetCoinById(coinId);
 
             // Assert
             Assert.That(result.Result, Is.InstanceOf<NotFoundResult>());
@@ -209,7 +218,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedCountriesDto);
 
             // Act
-            var result = await _controller.GetCountriesByContinent(continentId);
+            var result = await _mockController.Object.GetCountriesByContinent(continentId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -235,7 +244,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedCountriesDto);
 
             // Act
-            var result = await _controller.GetCountriesByContinent(continentId);
+            var result = await _mockController.Object.GetCountriesByContinent(continentId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -262,8 +271,8 @@ namespace CoinsManagerService.Tests.Controller
 
             var expectedPeriodsDto = new List<PeriodReadDto>
             {
-                new PeriodReadDto { Id = 1, Name = "Medieval" },
-                new PeriodReadDto { Id = 2, Name = "Renaissance" }
+                new PeriodReadDto { Id = 1, Name = "Medieval", Country = 5 },
+                new PeriodReadDto { Id = 2, Name = "Renaissance", Country = 5 }
             };
 
             _mockMapper
@@ -271,7 +280,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedPeriodsDto);
 
             // Act
-            var result = await _controller.GetPeriodsByCountry(countryId);
+            var result = await _mockController.Object.GetPeriodsByCountry(countryId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -297,7 +306,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedPeriodsDto);
 
             // Act
-            var result = await _controller.GetPeriodsByCountry(countryId);
+            var result = await _mockController.Object.GetPeriodsByCountry(countryId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -333,7 +342,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedCoinsDto);
 
             // Act
-            var result = await _controller.GetCoinsByPeriod(periodId);
+            var result = await _mockController.Object.GetCoinsByPeriod(periodId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -359,7 +368,7 @@ namespace CoinsManagerService.Tests.Controller
                 .Returns(expectedCoinsDto);
 
             // Act
-            var result = await _controller.GetCoinsByPeriod(periodId);
+            var result = await _mockController.Object.GetCoinsByPeriod(periodId);
             var okResult = result.Result as OkObjectResult;
 
             // Assert
@@ -377,8 +386,28 @@ namespace CoinsManagerService.Tests.Controller
             // Arrange
             var fileMock = new Mock<IFormFile>();
             fileMock.Setup(m => m.Length).Returns(10);
-            var coinCreateDto = new CoinCreateDto { ObverseImage = fileMock.Object, ReverseImage = fileMock.Object, Period = 1 };
-            var coinReadDto = new CoinReadDto { Id = 1 };
+            var coinCreateDto = new CoinCreateDto
+            {
+                ObverseImage = fileMock.Object,
+                ReverseImage = fileMock.Object,
+                Period = 1,
+                Nominal = "1",
+                Currency = "USD",
+                Year = "1999",
+                Type = 2,
+                CommemorativeName = "Anniversary",
+                CatalogId = 1234
+            };
+            var coinReadDto = new CoinReadDto
+            {
+                Id = 1,
+                Nominal = "1",
+                Currency = "USD",
+                Type = 2,
+                CommemorativeName = "Anniversary",
+                Period = 1,
+                PictPreviewPath = "root"
+            };
             var coinModel = new Coin { Id = 1, Nominal = "1" };
 
             var jsonResponse = """
@@ -400,7 +429,7 @@ namespace CoinsManagerService.Tests.Controller
 
 
             // Act
-            var okResult = await _controller.CreateCoin(coinCreateDto) as ActionResult<CoinReadDto>;
+            var okResult = await _mockController.Object.CreateCoin(coinCreateDto) as ActionResult<CoinReadDto>;
 
             // Assert
             Assert.That(okResult, Is.Not.Null);
@@ -420,7 +449,7 @@ namespace CoinsManagerService.Tests.Controller
             // Arrange
 
             // Act
-            var result = await _controller.CreateCoin(null);
+            var result = await _mockController.Object.CreateCoin(null);
 
             // Assert
             Assert.That(result.Result, Is.TypeOf<BadRequestObjectResult>());
@@ -437,7 +466,7 @@ namespace CoinsManagerService.Tests.Controller
             var coinCreateDto = new CoinCreateDto { ReverseImage = fileMock.Object };
 
             // Act
-            var result = await _controller.CreateCoin(coinCreateDto);
+            var result = await _mockController.Object.CreateCoin(coinCreateDto);
 
             // Assert
             Assert.That(result.Result, Is.TypeOf<BadRequestObjectResult>());
@@ -454,7 +483,7 @@ namespace CoinsManagerService.Tests.Controller
             var coinCreateDto = new CoinCreateDto { ObverseImage = fileMock.Object };
 
             // Act
-            var result = await _controller.CreateCoin(coinCreateDto);
+            var result = await _mockController.Object.CreateCoin(coinCreateDto);
 
             // Assert
             Assert.That(result.Result, Is.TypeOf<BadRequestObjectResult>());
@@ -471,7 +500,7 @@ namespace CoinsManagerService.Tests.Controller
             var coinCreateDto = new CoinCreateDto { ObverseImage = fileMock.Object, ReverseImage = fileMock.Object };
 
             // Act
-            var result = await _controller.CreateCoin(coinCreateDto);
+            var result = await _mockController.Object.CreateCoin(coinCreateDto);
 
             // Assert
             Assert.That(result.Result, Is.TypeOf<BadRequestObjectResult>());
@@ -504,12 +533,188 @@ namespace CoinsManagerService.Tests.Controller
             _mockAzureFunctionService.Setup(m => m.CallFunctionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>())).ReturnsAsync(httpResponse);
 
             // Act
-            var result = await _controller.CreateCoin(coinCreateDto);
+            var result = await _mockController.Object.CreateCoin(coinCreateDto);
 
             // Assert
             Assert.That(result.Result, Is.TypeOf<ObjectResult>());
             var badRequestResult = result.Result as ObjectResult;
             Assert.That(badRequestResult!.Value, Is.EqualTo("Failed to process images."));
+        }
+
+        [Test]
+        public async Task UpdateCoin_ExisitngId_CoinUpdated()
+        {
+            // Arrange
+            var coin = new Coin { Id = 7 };
+            var coinUpdateDto = new CoinUpdateDto 
+            { 
+                Nominal = "1",
+                Currency = "USD",
+                Year = "1999",
+                Type = 2,
+                CommemorativeName = "Name",
+                Period = 5,
+                PictPreviewPath = "root"
+            };
+            _mockRepo.Setup(m => m.GetCoinByIdAsync(7)).ReturnsAsync(coin);
+
+            // Act
+            var result = await _mockController.Object.UpdateCoin(7, coinUpdateDto);
+
+            // Assert
+            _mockMapper.Verify(m => m.Map(coinUpdateDto, coin), Times.Once);
+            _mockRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+        }
+
+        [Test]
+        public async Task UpdateCoin_CoinNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            int coinId = 1;
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(null as Coin);
+
+            // Act
+            var result = await _mockController.Object.UpdateCoin(coinId, new CoinUpdateDto());
+
+            // Assert
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult, Is.Not.Null);
+            Assert.That(notFoundResult.StatusCode, Is.EqualTo(404));
+        }
+
+        [Test]
+        public async Task UpdateCoin_NullCoinUpdateDto_ReturnsBadRequest()
+        {
+            // Arrange
+
+            // Act
+            var result = await _mockController.Object.UpdateCoin(1, null);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestResult>());
+        }
+
+
+        [Test]
+        public async Task PartiallyUpdateCoin_CoinNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            int coinId = 1;
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(null as Coin);
+
+            var patchDoc = new JsonPatchDocument<CoinUpdateDto>();
+
+            // Act
+            var result = await _mockController.Object.PartiallyUpdateCoin(coinId, patchDoc);
+
+            // Assert
+            var notFoundResult = result as NotFoundObjectResult;
+            Assert.That(notFoundResult, Is.Not.Null);
+            Assert.That(notFoundResult.StatusCode, Is.EqualTo(404));
+        }
+
+        [Test]
+        public async Task PartiallyUpdateCoin_InvalidModelState_ReturnsBadRequest()
+        {
+            // Arrange
+            int coinId = 1;
+            var existingCoin = new Coin();
+            var coinUpdateDto = new CoinUpdateDto();
+            var patchDoc = new JsonPatchDocument<CoinUpdateDto>();
+            patchDoc.Replace(c => c.Year, "New Value");
+
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(existingCoin);
+            _mockMapper.Setup(m => m.Map<CoinUpdateDto>(existingCoin)).Returns(coinUpdateDto);
+
+            _mockController.Object.ModelState.AddModelError("SomeProperty", "Invalid value");
+
+            // Act
+            var result = await _mockController.Object.PartiallyUpdateCoin(coinId, patchDoc);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+        }
+
+        [Test]
+        public async Task PartiallyUpdateCoin_ValidPatch_UpdatesCoinAndReturnsNoContent()
+        {
+            // Arrange
+            int coinId = 1;
+            var existingCoin = new Coin();
+            var coinUpdateDto = new CoinUpdateDto
+            {
+                Nominal = "1",
+                Currency = "USD",
+                Year = "1999",
+                Type = 2,
+                CommemorativeName = "Name",
+                Period = 5,
+                PictPreviewPath = "root"
+            };
+            var patchDoc = new JsonPatchDocument<CoinUpdateDto>();
+            patchDoc.Replace(c => c.Year, "Updated Value");
+
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(existingCoin);
+            _mockMapper.Setup(m => m.Map<CoinUpdateDto>(existingCoin)).Returns(coinUpdateDto);
+            _mockMapper.Setup(m => m.Map(coinUpdateDto, existingCoin)); 
+
+            // Act
+            var result = await _mockController.Object.PartiallyUpdateCoin(coinId, patchDoc);
+
+            // Assert
+            _mockMapper.Verify(m => m.Map(coinUpdateDto, existingCoin), Times.Once);
+            _mockRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
+            Assert.That(result, Is.InstanceOf<NoContentResult>());
+        }
+
+        [Test]
+        public async Task DeleteCoin_CoinNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            int coinId = 1;
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(null as Coin);
+
+            // Act
+            var result = await _mockController.Object.DeleteCoin(coinId);
+
+            // Assert
+            var notFoundResult = result.Result as NotFoundObjectResult;
+            Assert.That(notFoundResult, Is.Not.Null);
+            Assert.That(notFoundResult.StatusCode, Is.EqualTo(StatusCodes.Status404NotFound));            
+        }
+
+        [Test]
+        public async Task DeleteCoin_ValidCoin_ReturnsOk()
+        {
+            // Arrange
+            int coinId = 1;
+            var existingCoin = new Coin();
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ReturnsAsync(existingCoin);
+            _mockRepo.Setup(r => r.RemoveCoin(existingCoin)).Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _mockController.Object.DeleteCoin(coinId);
+
+            // Assert
+            Assert.That(result.Result, Is.InstanceOf<OkResult>());
+            _mockRepo.Verify(r => r.RemoveCoin(existingCoin), Times.Once);
+        }
+
+        [Test]
+        public async Task DeleteCoin_ExceptionThrown_ReturnsInternalServerError()
+        {
+            // Arrange
+            int coinId = 1;
+            _mockRepo.Setup(r => r.GetCoinByIdAsync(coinId)).ThrowsAsync(new Exception("Database error"));
+
+            // Act
+            var result = await _mockController.Object.DeleteCoin(coinId);
+
+            // Assert
+            var objectResult = result.Result as ObjectResult;
+            Assert.That(objectResult, Is.Not.Null);
+            Assert.That(objectResult.StatusCode, Is.EqualTo(StatusCodes.Status500InternalServerError));
         }
     }
 }
