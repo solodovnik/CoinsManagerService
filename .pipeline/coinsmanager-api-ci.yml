@@ -36,8 +36,7 @@ stages:
         extraProperties: |
           sonar.exclusions=CoinsManagerService/Migrations/**
           sonar.coverage.exclusions=CoinsManagerService/Migrations/**
-          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
-
+          sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/*.opencover.xml
 
     # Build the solution
     - task: DotNetCoreCLI@2
@@ -86,17 +85,25 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/AzureFunctions/ProcessImagesFunction.zip'
         replaceExistingArchive: true
     
-    # Run Unit Tests with coverage
     - task: DotNetCoreCLI@2
-      displayName: 'Run Unit Tests'
+      displayName: 'Run Unit Tests - CoinsManagerService'
       inputs:
         command: 'test'
-        projects: '**/*Tests/*.csproj'
-        arguments: '/p:CollectCoverage=true /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/coverage.opencover.xml /p:CoverletOutputFormat=opencover'
+        projects: '**/CoinsManagerService.Tests/*.csproj'
+        arguments: >
+          /p:CollectCoverage=true
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/CoinsManagerService.opencover.xml
+          /p:CoverletOutputFormat=opencover
 
-    # Display coverage report
-    - script: cat $(Build.SourcesDirectory)/TestResults/coverage.opencover.xml
-      displayName: 'Display Coverage Report Contents'
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Unit Tests - AzureFunctions.Tests'
+      inputs:
+        command: 'test'
+        projects: '**/AzureFunctions.Tests/*.csproj'
+        arguments: >
+          /p:CollectCoverage=true
+          /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/AzureFunctions.opencover.xml
+          /p:CoverletOutputFormat=opencover
 
     # Publish test results
     - task: PublishPipelineArtifact@1
