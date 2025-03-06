@@ -35,7 +35,7 @@ stages:
         projectName: 'CoinsManagerAPI'
         extraProperties: |
           sonar.exclusions=CoinsManagerService/Migrations/**
-          sonar.coverage.exclusions=CoinsManagerService/Migrations/**
+          sonar.coverage.exclusions=CoinsManagerService/Migrations/**,CoinsManagerService/Profiles/**
           sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/TestResults/*.opencover.xml
 
     # Build the solution
