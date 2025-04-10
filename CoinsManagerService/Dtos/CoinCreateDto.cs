@@ -23,7 +23,7 @@ namespace CoinsManagerService.Dtos
         public int? Period { get; set; }
 
         [Required]
-        public int? CatalogId { get; set; }
+        public string CatalogId { get; set; }
 
         [Required]
         public IFormFile ObverseImage { get; set; }

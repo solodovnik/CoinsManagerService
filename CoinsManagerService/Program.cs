@@ -54,7 +54,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration);
 builder.Services.AddSingleton(new BlobServiceClient(builder.Configuration.GetConnectionString("AzureStorage")));
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
-builder.Services.AddHttpClient<AzureFunctionService>();
+builder.Services.AddHttpClient<IAzureFunctionService, AzureFunctionService>();
 
 var app = builder.Build();
 

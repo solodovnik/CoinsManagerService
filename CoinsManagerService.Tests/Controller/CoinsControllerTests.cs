@@ -396,7 +396,7 @@ namespace CoinsManagerService.Tests.Controller
                 Year = "1999",
                 Type = 2,
                 CommemorativeName = "Anniversary",
-                CatalogId = 1234
+                CatalogId = "1234"
             };
             var coinReadDto = new CoinReadDto
             {

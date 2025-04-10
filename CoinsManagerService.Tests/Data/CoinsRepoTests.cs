@@ -199,7 +199,7 @@ namespace CoinsManagerService.Tests.Data
 
 
         [Test]
-        public async Task CreateCoin_ThrowsException_WhenCoinIsNull()
+        public void CreateCoin_ThrowsException_WhenCoinIsNull()
         {
             // Assign            
 
@@ -225,7 +225,7 @@ namespace CoinsManagerService.Tests.Data
         }
 
         [Test]
-        public async Task RemoveCoin_ThrowsException_WhenCoinIsNull()
+        public void RemoveCoin_ThrowsException_WhenCoinIsNull()
         {
             // Assign            
 
