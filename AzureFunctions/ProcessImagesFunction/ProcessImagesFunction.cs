@@ -8,6 +8,8 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using Microsoft.Azure.Functions.Worker;
 using ImageMagick;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
 namespace AzureFunctions
 {
@@ -32,8 +34,8 @@ namespace AzureFunctions
                 var reversePngBytes = ConvertToPngIfNeeded(reverseImageBytes, log);
 
                 // Process images: resize, crop, and merge
-                using var obverseImage = LoadAndProcessImage(obversePngBytes);
-                using var reverseImage = LoadAndProcessImage(reversePngBytes);
+                using var obverseImage = await LoadAndProcessImage(obversePngBytes, log);
+                using var reverseImage = await LoadAndProcessImage(reversePngBytes, log);
 
                 var mergedImage = MergeImagesSideBySide(obverseImage, reverseImage);
 
@@ -74,8 +76,10 @@ namespace AzureFunctions
             return imageBytes;
         }
 
-        private static Image<Rgba32> LoadAndProcessImage(byte[] imageBytes)
+        private static async Task<Image<Rgba32>> LoadAndProcessImage(byte[] imageBytes, ILogger log)
         {
+            int cropX, cropY;
+
             var image = Image.Load<Rgba32>(imageBytes);
             int targetWidth = 350; // Half of merged image width
             int targetHeight = 420;
@@ -87,9 +91,30 @@ namespace AzureFunctions
                 Mode = ResizeMode.Max
             }));
 
-            // Center crop
-            int cropX = (image.Width - targetWidth) / 2;
-            int cropY = (image.Height - targetHeight) / 2;
+            var bbox = await GetCoinBoundingBoxAsync(imageBytes, log);
+
+            if (bbox != null)
+            {
+                var actualBox = bbox;
+
+                // Convert relative coords to pixels
+                int x = (int)(actualBox.Left * image.Width);
+                int y = (int)(actualBox.Top * image.Height);
+                int w = (int)(actualBox.Width * image.Width);
+                int h = (int)(actualBox.Height * image.Height);
+
+                cropX = Math.Max(x + (w - targetWidth) / 2, 0);
+                cropY = Math.Max(y + (h - targetHeight) / 2, 0);
+
+                cropX = Math.Min(cropX, image.Width - targetWidth);
+                cropY = Math.Min(cropY, image.Height - targetHeight);
+            }
+            else
+            {
+                // Center crop
+                cropX = (image.Width - targetWidth) / 2;
+                cropY = (image.Height - targetHeight) / 2;
+            }
 
             image.Mutate(x => x.Crop(new Rectangle(cropX, cropY, targetWidth, targetHeight)));
             return image;
@@ -117,10 +142,64 @@ namespace AzureFunctions
             return Convert.ToBase64String(outputStream.ToArray());
         }
 
+        private static async Task<BoundingBoxPercent?> GetCoinBoundingBoxAsync(byte[] imageBytes, ILogger log)
+        {
+            try
+            {
+                var predictionKey = Environment.GetEnvironmentVariable("CustomVisionPredictionKey");
+                var endpoint = Environment.GetEnvironmentVariable("CustomVisionPredictionEndpoint");
+                var projectId = Environment.GetEnvironmentVariable("CustomVisionProjectId");
+                var publishedName = Environment.GetEnvironmentVariable("CustomVisionPublishedModelName");
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Prediction-Key", predictionKey);
+
+                using var content = new ByteArrayContent(imageBytes);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                var url = $"{endpoint}/customvision/v3.0/Prediction/{projectId}/detect/iterations/{publishedName}/image";
+                var response = await client.PostAsync(url, content);
+                var result = await response.Content.ReadAsStringAsync();
+
+                var json = JObject.Parse(result);
+                var prediction = json["predictions"]?.FirstOrDefault(p => p?["probability"] != null && p["probability"]!.Value<double>() > 0.6);
+                if (prediction == null) return null;
+
+                var bbox = prediction["boundingBox"];
+                double left = bbox?["left"]?.Value<double>() ?? 0.0;
+                double top = bbox?["top"]?.Value<double>() ?? 0.0;
+                double width = bbox?["width"]?.Value<double>() ?? 0.0;
+                double height = bbox?["height"]?.Value<double>() ?? 0.0;
+
+                return new BoundingBoxPercent
+                {
+                    Left = (float)left,
+                    Top = (float)top,
+                    Width = (float)width,
+                    Height = (float)height
+                };
+            }
+            catch(Exception ex)
+            {
+                log.LogWarning($"Bounding box of coin wasn't defined: {ex.Message}");
+                return null;
+            }
+        }
+
+
         public class ImageRequest
         {
             public required string ObverseImageBase64 { get; set; }
             public required string ReverseImageBase64 { get; set; }
+        }
+
+        private class BoundingBoxPercent
+        {
+            public float Left { get; set; }
+            public float Top { get; set; }
+            public float Width { get; set; }
+            public float Height { get; set; }
+
         }
     }
 }
