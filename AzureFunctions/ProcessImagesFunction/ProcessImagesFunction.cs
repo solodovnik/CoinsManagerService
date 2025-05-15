@@ -83,46 +83,49 @@ namespace AzureFunctions
 
         private static async Task<Image<Rgba32>> LoadAndProcessImage(byte[] imageBytes, ILogger log)
         {
-            int cropX, cropY;
-
             var image = Image.Load<Rgba32>(imageBytes);
-            int targetWidth = 350; // Half of merged image width
+            int targetWidth = 350;
             int targetHeight = 420;
-
-            // Resize before cropping
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(targetWidth * 2, targetHeight * 2),
-                Mode = ResizeMode.Max
-            }));
 
             var bbox = await GetCoinBoundingBoxAsync(imageBytes, log);
 
+            Image<Rgba32> cropped;
+
             if (bbox != null)
             {
-                var actualBox = bbox;
+                int x = (int)(bbox.Left * image.Width);
+                int y = (int)(bbox.Top * image.Height);
+                int w = (int)(bbox.Width * image.Width);
+                int h = (int)(bbox.Height * image.Height);
 
-                // Convert relative coords to pixels
-                int x = (int)(actualBox.Left * image.Width);
-                int y = (int)(actualBox.Top * image.Height);
-                int w = (int)(actualBox.Width * image.Width);
-                int h = (int)(actualBox.Height * image.Height);
+                // Set padding to 10% to zoom in
+                int padX = (int)(w * 0.1);
+                int padY = (int)(h * 0.1);
 
-                cropX = Math.Max(x + (w - targetWidth) / 2, 0);
-                cropY = Math.Max(y + (h - targetHeight) / 2, 0);
+                int cropX = Math.Max(x - padX, 0);
+                int cropY = Math.Max(y - padY, 0);
+                int cropW = Math.Min(w + 2 * padX, image.Width - cropX);
+                int cropH = Math.Min(h + 2 * padY, image.Height - cropY);
 
-                cropX = Math.Min(cropX, image.Width - targetWidth);
-                cropY = Math.Min(cropY, image.Height - targetHeight);
+                cropped = image.Clone(ctx => ctx.Crop(new Rectangle(cropX, cropY, cropW, cropH)));
             }
             else
             {
-                // Center crop
-                cropX = (image.Width - targetWidth) / 2;
-                cropY = (image.Height - targetHeight) / 2;
+                // Fallback: center square crop
+                int side = Math.Min(image.Width, image.Height);
+                int cropX = (image.Width - side) / 2;
+                int cropY = (image.Height - side) / 2;
+                cropped = image.Clone(ctx => ctx.Crop(new Rectangle(cropX, cropY, side, side)));
             }
 
-            image.Mutate(x => x.Crop(new Rectangle(cropX, cropY, targetWidth, targetHeight)));
-            return image;
+            // Resize with Crop mode to fill target area without black bars
+            cropped.Mutate(ctx => ctx.Resize(new ResizeOptions
+            {
+                Size = new Size(targetWidth, targetHeight),
+                Mode = ResizeMode.Crop
+            }));
+
+            return cropped;
         }
 
         private static Image<Rgba32> MergeImagesSideBySide(Image<Rgba32> leftImage, Image<Rgba32> rightImage)
@@ -143,7 +146,10 @@ namespace AzureFunctions
         private static string ConvertImageToBase64(Image<Rgba32> image)
         {
             using var outputStream = new MemoryStream();
-            image.Save(outputStream, new JpegEncoder());
+            image.Save(outputStream, new JpegEncoder
+            {
+                Quality = 75
+            });
             return Convert.ToBase64String(outputStream.ToArray());
         }
 
