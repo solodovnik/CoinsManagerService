@@ -10,6 +10,7 @@ using Microsoft.Azure.Functions.Worker;
 using ImageMagick;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Headers;
+using ExifTag = SixLabors.ImageSharp.Metadata.Profiles.Exif.ExifTag;
 
 namespace AzureFunctions
 {
@@ -26,8 +27,12 @@ namespace AzureFunctions
             try
             {
                 var data = await ParseRequestBody(req);
-                var obverseImageBytes = Convert.FromBase64String(data.ObverseImageBase64);
-                var reverseImageBytes = Convert.FromBase64String(data.ReverseImageBase64);
+
+                var correctedOrientationObverseImageBase64 = await CorrectImageOrientationAsync(data.ObverseImageBase64);
+                var correctedOrientationReverseImageBase64 = await CorrectImageOrientationAsync(data.ReverseImageBase64);
+
+                var obverseImageBytes = Convert.FromBase64String(correctedOrientationObverseImageBase64);
+                var reverseImageBytes = Convert.FromBase64String(correctedOrientationReverseImageBase64);
 
                 // Ensure images are in PNG format
                 var obversePngBytes = ConvertToPngIfNeeded(obverseImageBytes, log);
@@ -179,13 +184,65 @@ namespace AzureFunctions
                     Height = (float)height
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 log.LogWarning($"Bounding box of coin wasn't defined: {ex.Message}");
                 return null;
             }
         }
 
+        public static async Task<string> CorrectImageOrientationAsync(string base64Image)
+        {
+            var imageBytes = Convert.FromBase64String(base64Image);
+            using var inputStream = new MemoryStream(imageBytes);
+            inputStream.Position = 0;
+
+            using var image = await Image.LoadAsync(inputStream);
+            var exif = image.Metadata.ExifProfile;
+
+            ushort orientation = 1;
+
+            var orientationEntry = exif?.Values.FirstOrDefault(v => v.Tag == ExifTag.Orientation);
+            if (orientationEntry != null)
+            {
+                var rawValue = orientationEntry.GetValue();
+                if (rawValue is ushort parsed)
+                {
+                    orientation = parsed;
+                }
+            }
+
+            switch (orientation)
+            {
+                case 2:
+                    image.Mutate(x => x.Flip(FlipMode.Horizontal));
+                    break;
+                case 3:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate180));
+                    break;
+                case 4:
+                    image.Mutate(x => x.Flip(FlipMode.Vertical));
+                    break;
+                case 5:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate90).Flip(FlipMode.Horizontal));
+                    break;
+                case 6:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate90));
+                    break;
+                case 7:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate270).Flip(FlipMode.Horizontal));
+                    break;
+                case 8:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate270));
+                    break;
+            }
+
+            exif?.RemoveValue(ExifTag.Orientation);
+
+            using var outputStream = new MemoryStream();
+            await image.SaveAsJpegAsync(outputStream);
+            return Convert.ToBase64String(outputStream.ToArray());
+        }
 
         public class ImageRequest
         {
