@@ -93,14 +93,15 @@ namespace AzureFunctions
 
             if (bbox != null)
             {
+                log.LogInformation("Applying crop at the coin location recognized by the AI.");
                 int x = (int)(bbox.Left * image.Width);
                 int y = (int)(bbox.Top * image.Height);
                 int w = (int)(bbox.Width * image.Width);
                 int h = (int)(bbox.Height * image.Height);
 
-                // Set padding to 10% to zoom in
-                int padX = (int)(w * 0.1);
-                int padY = (int)(h * 0.1);
+                // Set padding to 11% to zoom in
+                int padX = (int)(w * 0.11);
+                int padY = (int)(h * 0.11);
 
                 int cropX = Math.Max(x - padX, 0);
                 int cropY = Math.Max(y - padY, 0);
@@ -112,6 +113,7 @@ namespace AzureFunctions
             else
             {
                 // Fallback: center square crop
+                log.LogInformation("Applying center square crop since the AI couldn't recognize the coin.");
                 int side = Math.Min(image.Width, image.Height);
                 int cropX = (image.Width - side) / 2;
                 int cropY = (image.Height - side) / 2;
