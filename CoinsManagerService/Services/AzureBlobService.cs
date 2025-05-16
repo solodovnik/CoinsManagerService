@@ -33,5 +33,12 @@ namespace CoinsManagerService.Services
 
             return blobClient.Uri.ToString();
         }
+
+        public async Task DeleteFileAsync(string fileName, string containerName)
+        {
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(fileName);
+            await blobClient.DeleteIfExistsAsync();
+        }
     }
 }

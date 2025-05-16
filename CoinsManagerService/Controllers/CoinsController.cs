@@ -294,6 +294,8 @@ namespace CoinsManagerService.Controllers
                 }
 
                 await _coinsRepo.RemoveCoin(coinToDelete);
+                await _azureBlobService.DeleteFileAsync(coinToDelete.PictPreviewPath, _configuration["ImagesContainerName"]);
+                await _azureBlobService.DeleteFileAsync(coinToDelete.PictPreviewPath, _configuration["ThumbnailsContainerName"]);
                 return Ok();
             }
             catch (Exception)
