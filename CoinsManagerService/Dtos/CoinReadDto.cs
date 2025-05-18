@@ -11,5 +11,6 @@ namespace CoinsManagerService.Dtos
         public string CommemorativeName { get; set; }
         public int Period { get; set; }
         public string PictPreviewPath { get; set; }
+        public string CatalogId { get; set; }
     }
 }
