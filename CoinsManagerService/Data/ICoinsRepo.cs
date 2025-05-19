@@ -9,6 +9,7 @@ namespace CoinsManagerService.Data
         Task<bool> SaveChangesAsync();
         
         Task<IEnumerable<Continent>> GetAllContinentsAsync();
+        Task<IEnumerable<CoinType>> GetCoinTypesAsync();
         Task<Country> GetCountryByIdAsync(int id);
         Task<Country> GetCountryByPeriodIdAsync(int periodId);
         Task<Period> GetPeriodByIdAsync(int id);

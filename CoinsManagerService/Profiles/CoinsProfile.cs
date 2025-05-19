@@ -15,6 +15,7 @@ namespace CoinsManagerService.Profiles
                 .ForSourceMember(x => x.ReverseImage, y => y.DoNotValidate());
             CreateMap<CoinUpdateDto, Coin>();
             CreateMap<Continent, ContinentReadDto>();
+            CreateMap<CoinType, CoinTypeReadDto>();
             CreateMap<Country, CountryReadDto>();
             CreateMap<Period, PeriodReadDto>();
         }

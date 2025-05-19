@@ -60,6 +60,18 @@ namespace CoinsManagerService.Controllers
             return Ok(continentDtos);
         }
 
+        [HttpGet("cointypes")]
+        [SwaggerResponse(200)]
+        [SwaggerResponse(401)]
+        [SwaggerResponse(500)]
+        public async Task<ActionResult> GetCoinTypes()
+        {
+            var coinTypes = await _coinsRepo.GetCoinTypesAsync();
+            var coinTypeDtos = _mapper.Map<IEnumerable<CoinTypeReadDto>>(coinTypes);
+
+            return Ok(coinTypeDtos);
+        }
+
         [HttpGet("continents/{continentId}")]
         [SwaggerResponse(200)]
         [SwaggerResponse(401)]
