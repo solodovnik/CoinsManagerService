@@ -185,8 +185,8 @@ namespace CoinsManagerService.Controllers
                 var filePath = await GetFilePathAsync(coinCreateDto);
                 var fileName = $"{coinCreateDto.CatalogId}_{coinCreateDto.Nominal}{coinCreateDto.Currency}_{coinCreateDto.Year}.jpg";
 
-                var coinModel = _mapper.Map<Coin>(coinCreateDto);
-                coinModel.PictPreviewPath = Path.Combine(filePath, fileName);
+                var coinModel = _mapper.Map<Coin>(coinCreateDto);             
+                coinModel.PictPreviewPath = string.Join("/", filePath, fileName);
 
                 // Convert images to Base64
                 _logger.LogInformation("Converting obverse image to Base64.");
@@ -322,7 +322,7 @@ namespace CoinsManagerService.Controllers
             var period = await _coinsRepo.GetPeriodByIdAsync(coinCreateDto.Period ?? 0);
             var country = await _coinsRepo.GetCountryByPeriodIdAsync(coinCreateDto.Period ?? 0);            
             var continent = await _coinsRepo.GetContinentByCountryIdAsync(country.Id);
-            return $"/{Path.Combine(continent.Name, country.Name, period.Name)}";
+            return $"/{string.Join("/", continent.Name, country.Name, period.Name)}";
         }
 
         private bool ValidateCreateCoinRequest(CoinCreateDto coinCreateDto, out string errorMessage)
