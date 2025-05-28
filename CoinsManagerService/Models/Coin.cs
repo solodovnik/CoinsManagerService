@@ -19,5 +19,6 @@ namespace CoinsManagerService.Models
 
         public virtual Period PeriodNavigation { get; set; }
         public virtual CoinType TypeNavigation { get; set; }
+        public virtual CoinEmbeddings CoinEmbedding { get; set; }
     }
 }

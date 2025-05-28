@@ -10,6 +10,7 @@ namespace CoinsManagerService.Data
         
         Task<IEnumerable<Continent>> GetAllContinentsAsync();
         Task<IEnumerable<CoinType>> GetCoinTypesAsync();
+        Task<IEnumerable<CoinEmbeddings>> GetCoinEmbeddingsAsync();
         Task<Country> GetCountryByIdAsync(int id);
         Task<Country> GetCountryByPeriodIdAsync(int periodId);
         Task<Period> GetPeriodByIdAsync(int id);
