@@ -69,6 +69,12 @@ stages:
               --file "$(Build.ArtifactStagingDirectory)/ML/clip-ViT-B-32-vision.onnx" \
               --auth-mode key \
               --account-key $(AZURE_STORAGE_KEY)
+    - task: CopyFiles@2
+      displayName: 'Copy ONNX model to publish folder'
+      inputs:
+        SourceFolder: '$(Build.ArtifactStagingDirectory)/ML'
+        Contents: '**/*.onnx'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/AppService/CoinsManagerService/ML'
 
     # Publish the App Service artifacts
     - task: DotNetCoreCLI@2
@@ -140,13 +146,6 @@ stages:
     - task: SonarCloudPublish@3
       inputs:
         pollingTimeoutSec: '300'
-
-    - task: CopyFiles@2
-      displayName: 'Copy ONNX model to publish folder'
-      inputs:
-        SourceFolder: '$(Build.ArtifactStagingDirectory)/ML'
-        Contents: '**/*.onnx'
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/AppService/ML'
 
     # Publish App Service artifact
     - task: PublishBuildArtifacts@1
