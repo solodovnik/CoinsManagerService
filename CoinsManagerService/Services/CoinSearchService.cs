@@ -89,7 +89,7 @@ namespace CoinsManagerService.Services
             using var ms = new MemoryStream();
             image.SaveAsPng(ms);
             ms.Seek(0, SeekOrigin.Begin);
-            var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "coin-model.onnx");
+            var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "clip-ViT-B-32-vision.onnx");
             var imageTensor = PreprocessImage(ms);
 
             using var session = new InferenceSession(modelPath);
