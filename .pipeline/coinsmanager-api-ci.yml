@@ -1,3 +1,9 @@
+variables:
+  modelFileName: clip-ViT-B-32-vision.onnx
+  modelContainer: onnx-model
+  modelStorageAccount: coinsdatastorage
+  modelLocalPath: '$(Build.ArtifactStagingDirectory)/ML'
+
 trigger:
 - main
 
@@ -121,6 +127,34 @@ stages:
     - task: SonarCloudPublish@3
       inputs:
         pollingTimeoutSec: '300'
+
+    - task: AzureCLI@2
+      displayName: 'Download ONNX Model from Blob Storage'
+      inputs:
+        azureSubscription: 'Azure connection'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az storage blob download `
+            --account-name $(modelStorageAccount) `
+            --container-name $(modelContainer) `
+            --name $(modelFileName) `
+            --file "$(modelLocalPath)/$(modelFileName)" `
+            --auth-mode key
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish .NET App'
+      inputs:
+        command: 'publish'
+        publishWebProjects: true
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/publish'
+        zipAfterPublish: false
+
+    - task: CopyFiles@2
+      displayName: 'Copy ONNX model to publish folder'
+      inputs:
+        SourceFolder: '$(modelLocalPath)'
+        Contents: '**/*.onnx'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/publish/ML'
 
     # Publish App Service artifact
     - task: PublishBuildArtifacts@1
