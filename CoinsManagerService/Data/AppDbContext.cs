@@ -23,6 +23,7 @@ namespace CoinsManagerService.Data
         public virtual DbSet<Continent> Continents { get; set; }
         public virtual DbSet<Country> Countries { get; set; }
         public virtual DbSet<Period> Periods { get; set; }
+        public virtual DbSet<CoinEmbeddings> CoinEmbeddings { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "Cyrillic_General_CI_AS");
@@ -101,6 +102,19 @@ namespace CoinsManagerService.Data
                     .HasForeignKey(d => d.Country)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Periods_Countries");
+            });
+
+            modelBuilder.Entity<CoinEmbeddings>(entity =>
+            {
+                entity.HasKey(e => e.CoinId);
+
+                entity.Property(e => e.ObverseEmbedding).HasColumnType("nvarchar(max)");
+                entity.Property(e => e.ReverseEmbedding).HasColumnType("nvarchar(max)");
+
+                entity.HasOne(e => e.Coin)
+                    .WithOne(c => c.CoinEmbedding)
+                    .HasForeignKey<CoinEmbeddings>(e => e.CoinId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             OnModelCreatingPartial(modelBuilder);

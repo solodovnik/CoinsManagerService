@@ -33,6 +33,11 @@ namespace CoinsManagerService.Data
             return await _context.CoinTypes.ToListAsync();
         }
 
+        public async Task<IEnumerable<CoinEmbeddings>> GetCoinEmbeddingsAsync()
+        {
+            return await _context.CoinEmbeddings.ToListAsync();
+        }
+
         public async Task<Coin> GetCoinByIdAsync(int id)
         {
             return await _context.Coins.FirstOrDefaultAsync(x => x.Id == id);
