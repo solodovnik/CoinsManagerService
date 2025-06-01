@@ -20,21 +20,6 @@ stages:
       inputs:
         packageType: 'sdk'
         version: '8.0.x'
-    - task: AzureCLI@2
-      displayName: 'Download ONNX Model from Blob Storage'
-      inputs:
-        azureSubscription: 'Azure connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-            mkdir -p "$(Build.ArtifactStagingDirectory)/ML"
-            az storage blob download \
-              --account-name coinsdatastorage \
-              --container-name onnx-model \
-              --name clip-ViT-B-32-vision.onnx \
-              --file "$(Build.ArtifactStagingDirectory)/ML/clip-ViT-B-32-vision.onnx" \
-              --auth-mode key \
-              --account-key $(AZURE_STORAGE_KEY)
 
     # Restore NuGet packages
     - task: DotNetCoreCLI@2
@@ -68,6 +53,22 @@ stages:
     - script: |
         rm -rf $(Build.ArtifactStagingDirectory)/*
       displayName: 'Clean Artifact Staging Directory'
+
+    - task: AzureCLI@2
+      displayName: 'Download ONNX Model from Blob Storage'
+      inputs:
+        azureSubscription: 'Azure connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            mkdir -p "$(Build.ArtifactStagingDirectory)/ML"
+            az storage blob download \
+              --account-name coinsdatastorage \
+              --container-name onnx-model \
+              --name clip-ViT-B-32-vision.onnx \
+              --file "$(Build.ArtifactStagingDirectory)/ML/clip-ViT-B-32-vision.onnx" \
+              --auth-mode key \
+              --account-key $(AZURE_STORAGE_KEY)
 
     # Publish the App Service artifacts
     - task: DotNetCoreCLI@2
