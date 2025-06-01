@@ -32,62 +32,72 @@ namespace CoinsManagerService.Services
 
         public async Task<CoinReadDto> FindMatchAsync(IFormFile obverse, IFormFile reverse)
         {
-            using var obverseStream = new MemoryStream();
-            await obverse.CopyToAsync(obverseStream);
-            var obverseBytes = obverseStream.ToArray();
-            var croppedObverse = await _imageProcessingService.CropAsync(obverseBytes);
+            var obvEmbedding = await GetImageEmbeddingAsync(obverse);
+            var revEmbedding = await GetImageEmbeddingAsync(reverse);
 
-            using var reverseStream = new MemoryStream();
-            await reverse.CopyToAsync(reverseStream);
-            var reverseBytes = reverseStream.ToArray();
-            var croppedReverse = await _imageProcessingService.CropAsync(reverseBytes);
+            var storedEmbeddings = await _coinRepository.GetCoinEmbeddingsAsync();
 
-            var obvEmbedding = GetEmbeddingAsync(croppedObverse);
-            var revEmbedding = GetEmbeddingAsync(croppedReverse);            
+            var bestMatch = FindBestMatch(obvEmbedding, revEmbedding, storedEmbeddings);
 
-            var storedEmbeddings = await _coinRepository.GetCoinEmbeddingsAsync();        
-
-            double bestObverseSimilarity = 0;
-            double bestReverseSimilarity = 0;
-            int bestMatchCoinId = 0;
-
-            foreach (var stored in storedEmbeddings)
+            const double threshold = 0.85;
+            if (bestMatch.ObverseSimilarity > threshold && bestMatch.ReverseSimilarity > threshold)
             {
-                var obverseSimilarity = CosineSimilarity(obvEmbedding, JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding));
-                var reverseSimilarity = CosineSimilarity(revEmbedding, JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding));
-                var totalSimilarity = obverseSimilarity + reverseSimilarity;
-                if ((obverseSimilarity > bestObverseSimilarity) && (reverseSimilarity > bestReverseSimilarity))
-                {
-                    bestObverseSimilarity = obverseSimilarity;
-                    bestReverseSimilarity = reverseSimilarity;
-                    bestMatchCoinId = stored.CoinId;
-                }
-            }
-
-            double threshold = 0.85;
-            if ((bestObverseSimilarity > threshold) && (bestReverseSimilarity > threshold))
-            {
-                var bestMatchCoin = await _coinRepository.GetCoinByIdAsync(bestMatchCoinId);
-                return _mapper.Map<CoinReadDto>(bestMatchCoin);
+                var coin = await _coinRepository.GetCoinByIdAsync(bestMatch.CoinId);
+                return _mapper.Map<CoinReadDto>(coin);
             }
 
             return null;
         }
 
-        private float[] GetEmbeddingAsync(Image<Rgba32> image)
+        private async Task<float[]> GetImageEmbeddingAsync(IFormFile image)
+        {
+            using var stream = new MemoryStream();
+            await image.CopyToAsync(stream);
+            var bytes = stream.ToArray();
+            var cropped = await _imageProcessingService.CropAsync(bytes);
+            return GetEmbedding(cropped);
+        }
+
+        private (int CoinId, double ObverseSimilarity, double ReverseSimilarity) FindBestMatch(
+            float[] obvEmbedding, float[] revEmbedding, IEnumerable<CoinEmbeddings> storedEmbeddings)
+        {
+            int bestCoinId = 0;
+            double bestObvSim = 0;
+            double bestRevSim = 0;
+
+            foreach (var stored in storedEmbeddings)
+            {
+                var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
+                var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
+
+                var obvSim = CosineSimilarity(obvEmbedding, storedObv);
+                var revSim = CosineSimilarity(revEmbedding, storedRev);
+
+                if (obvSim > bestObvSim && revSim > bestRevSim)
+                {
+                    bestObvSim = obvSim;
+                    bestRevSim = revSim;
+                    bestCoinId = stored.CoinId;
+                }
+            }
+
+            return (bestCoinId, bestObvSim, bestRevSim);
+        }
+
+        private float[] GetEmbedding(Image<Rgba32> image)
         {           
             using var ms = new MemoryStream();
-            image.SaveAsPng(ms); // Or SaveAsJpeg if needed
+            image.SaveAsPng(ms);
             ms.Seek(0, SeekOrigin.Begin);
-            string modelPath = @"C:\Users\vadso\Downloads\clip-ViT-B-32-vision.onnx";
+            var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "coin-model.onnx");
             var imageTensor = PreprocessImage(ms);
 
             using var session = new InferenceSession(modelPath);
 
             var inputs = new List<NamedOnnxValue>
-    {
-        NamedOnnxValue.CreateFromTensor("pixel_values", imageTensor) // explicitly use the correct input name
-    };
+            {
+                NamedOnnxValue.CreateFromTensor("pixel_values", imageTensor)
+            };
 
             using var results = session.Run(inputs);
 
@@ -99,13 +109,8 @@ namespace CoinsManagerService.Services
             // Optional: L2 normalize the embedding (recommended for search)
             var norm = MathF.Sqrt(outputTensor.Sum(v => v * v));
             var normalized = outputTensor.Select(v => v / norm).ToArray();
-            // Call your embedding model here
+        
             return normalized;
-        }
-
-        private double CalculateEuclideanDistance(float[] a, float[] b)
-        {
-            return Math.Sqrt(a.Zip(b, (x, y) => Math.Pow(x - y, 2)).Sum());
         }
 
         private static DenseTensor<float> PreprocessImage(Stream imageStream)
@@ -132,7 +137,7 @@ namespace CoinsManagerService.Services
             return tensor;
         }
 
-        public static double CosineSimilarity(float[] vectorA, float[] vectorB)
+        private static double CosineSimilarity(float[] vectorA, float[] vectorB)
         {
             if (vectorA.Length != vectorB.Length)
                 throw new ArgumentException("Vectors must be of same length");

@@ -1,10 +1,8 @@
 ﻿using CoinsManagerService.Dtos;
 using CoinsManagerService.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CoinsManagerService.Controllers

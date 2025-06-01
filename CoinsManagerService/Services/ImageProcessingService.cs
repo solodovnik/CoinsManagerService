@@ -136,8 +136,6 @@ namespace CoinsManagerService.Services
                 Mode = ResizeMode.Crop
             }));
 
-            //var debug = ConvertToBase64(cropped);
-
             return cropped;
         }
 

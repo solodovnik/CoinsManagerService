@@ -33,5 +33,11 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="ML\clip-ViT-B-32-vision.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>

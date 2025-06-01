@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using SixLabors.ImageSharp;
+﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Threading.Tasks;
 
