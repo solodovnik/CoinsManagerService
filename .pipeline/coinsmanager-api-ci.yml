@@ -1,8 +1,5 @@
 variables:
-  modelFileName: clip-ViT-B-32-vision.onnx
-  modelContainer: onnx-model
-  modelStorageAccount: coinsdatastorage
-  modelLocalPath: '$(Build.ArtifactStagingDirectory)/ML'
+  - group: storage-secrets
 
 trigger:
 - main
@@ -30,13 +27,15 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          az storage blob download `
-            --account-name $(modelStorageAccount) `
-            --container-name $(modelContainer) `
-            --name $(modelFileName) `
-            --file "$(modelLocalPath)/$(modelFileName)" `
-            --auth-mode key
-            
+            mkdir -p "$(Build.ArtifactStagingDirectory)/ML"
+            az storage blob download \
+              --account-name coinsdatastorage \
+              --container-name onnx-model \
+              --name clip-ViT-B-32-vision.onnx \
+              --file "$(Build.ArtifactStagingDirectory)/ML/clip-ViT-B-32-vision.onnx" \
+              --auth-mode key \
+              --account-key $(AZURE_STORAGE_KEY)
+
     # Restore NuGet packages
     - task: DotNetCoreCLI@2
       displayName: 'Restore NuGet Packages'
@@ -141,12 +140,10 @@ stages:
       inputs:
         pollingTimeoutSec: '300'
 
-
-
     - task: CopyFiles@2
       displayName: 'Copy ONNX model to publish folder'
       inputs:
-        SourceFolder: '$(modelLocalPath)'
+        SourceFolder: '$(Build.ArtifactStagingDirectory)/ML'
         Contents: '**/*.onnx'
         TargetFolder: '$(Build.ArtifactStagingDirectory)/AppService/ML'
 
