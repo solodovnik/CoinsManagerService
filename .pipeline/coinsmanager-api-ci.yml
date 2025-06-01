@@ -23,7 +23,20 @@ stages:
       inputs:
         packageType: 'sdk'
         version: '8.0.x'
-
+    - task: AzureCLI@2
+      displayName: 'Download ONNX Model from Blob Storage'
+      inputs:
+        azureSubscription: 'Azure connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az storage blob download `
+            --account-name $(modelStorageAccount) `
+            --container-name $(modelContainer) `
+            --name $(modelFileName) `
+            --file "$(modelLocalPath)/$(modelFileName)" `
+            --auth-mode key
+            
     # Restore NuGet packages
     - task: DotNetCoreCLI@2
       displayName: 'Restore NuGet Packages'
@@ -128,33 +141,14 @@ stages:
       inputs:
         pollingTimeoutSec: '300'
 
-    - task: AzureCLI@2
-      displayName: 'Download ONNX Model from Blob Storage'
-      inputs:
-        azureSubscription: 'Azure connection'
-        scriptType: 'ps'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az storage blob download `
-            --account-name $(modelStorageAccount) `
-            --container-name $(modelContainer) `
-            --name $(modelFileName) `
-            --file "$(modelLocalPath)/$(modelFileName)" `
-            --auth-mode key
-    - task: DotNetCoreCLI@2
-      displayName: 'Publish .NET App'
-      inputs:
-        command: 'publish'
-        publishWebProjects: true
-        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/publish'
-        zipAfterPublish: false
+
 
     - task: CopyFiles@2
       displayName: 'Copy ONNX model to publish folder'
       inputs:
         SourceFolder: '$(modelLocalPath)'
         Contents: '**/*.onnx'
-        TargetFolder: '$(Build.ArtifactStagingDirectory)/publish/ML'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/AppService/ML'
 
     # Publish App Service artifact
     - task: PublishBuildArtifacts@1
