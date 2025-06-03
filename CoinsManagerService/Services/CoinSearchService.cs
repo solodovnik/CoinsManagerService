@@ -14,6 +14,7 @@ using CoinsManagerService.Data;
 using System.Text.Json;
 using AutoMapper;
 using CoinsManagerService.Models;
+using Microsoft.Extensions.Logging;
 
 namespace CoinsManagerService.Services
 {
@@ -22,21 +23,28 @@ namespace CoinsManagerService.Services
         private readonly ICoinsRepo _coinRepository;
         private readonly IMapper _mapper;
         private readonly IImageProcessingService _imageProcessingService;
+        private readonly ILogger<CoinSearchService> _logger;
 
-        public CoinSearchService(ICoinsRepo coinsRepository, IMapper mapper, IImageProcessingService imageProcessingService)
+        public CoinSearchService(ICoinsRepo coinsRepository, IMapper mapper, IImageProcessingService imageProcessingService, ILogger<CoinSearchService> logger)
         {
             _coinRepository = coinsRepository;
             _mapper = mapper;
             _imageProcessingService = imageProcessingService;
+            _logger = logger;
         }
 
         public async Task<CoinReadDto> FindMatchAsync(IFormFile obverse, IFormFile reverse)
         {
+            _logger.LogInformation("Getting embeddings for coin obverse");
             var obvEmbedding = await GetImageEmbeddingAsync(obverse);
+
+            _logger.LogInformation("Getting embeddings for coin reverse");
             var revEmbedding = await GetImageEmbeddingAsync(reverse);
 
+            _logger.LogInformation("Getting embedding for stored coins");
             var storedEmbeddings = await _coinRepository.GetCoinEmbeddingsAsync();
 
+            _logger.LogInformation("Finding best coin match");
             var bestMatch = FindBestMatch(obvEmbedding, revEmbedding, storedEmbeddings);
 
             const double threshold = 0.85;
@@ -64,9 +72,11 @@ namespace CoinsManagerService.Services
             int bestCoinId = 0;
             double bestObvSim = 0;
             double bestRevSim = 0;
+            int i = 0;
 
             foreach (var stored in storedEmbeddings)
             {
+                i++;
                 var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
                 var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
 
@@ -79,6 +89,7 @@ namespace CoinsManagerService.Services
                     bestRevSim = revSim;
                     bestCoinId = stored.CoinId;
                 }
+                _logger.LogInformation($"{i} Cosine similarity for {stored.CoinId} is {obvSim}/{revSim}");
             }
 
             return (bestCoinId, bestObvSim, bestRevSim);
