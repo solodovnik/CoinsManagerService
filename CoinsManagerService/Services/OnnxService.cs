@@ -11,8 +11,10 @@ public class OnnxService : IOnnxService, IDisposable
 
     public OnnxService()
     {
+        var options = new SessionOptions();
+        options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
         var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "clip-ViT-B-32-vision.onnx");
-        _session = new InferenceSession(modelPath);
+        _session = new InferenceSession(modelPath, options);
     }
 
     public IDisposableReadOnlyCollection<DisposableNamedOnnxValue> GenerateEmbeddings(DenseTensor<float> imageTensor)
