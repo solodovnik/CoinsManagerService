@@ -56,6 +56,7 @@ builder.Services.AddSingleton(new BlobServiceClient(builder.Configuration.GetCon
 builder.Services.AddSingleton<IAzureBlobService, AzureBlobService>();
 builder.Services.AddScoped<ICoinSearchService, CoinSearchService>();
 builder.Services.AddSingleton<IImageProcessingService, ImageProcessingService>();
+builder.Services.AddSingleton<IOnnxService, OnnxService>();
 builder.Services.AddHttpClient<IAzureFunctionService, AzureFunctionService>();
 
 var app = builder.Build();

@@ -24,13 +24,15 @@ namespace CoinsManagerService.Services
         private readonly IMapper _mapper;
         private readonly IImageProcessingService _imageProcessingService;
         private readonly ILogger<CoinSearchService> _logger;
+        private readonly IOnnxService _onnxService;
 
-        public CoinSearchService(ICoinsRepo coinsRepository, IMapper mapper, IImageProcessingService imageProcessingService, ILogger<CoinSearchService> logger)
+        public CoinSearchService(ICoinsRepo coinsRepository, IMapper mapper, IImageProcessingService imageProcessingService, IOnnxService onnxService, ILogger<CoinSearchService> logger)
         {
             _coinRepository = coinsRepository;
             _mapper = mapper;
             _imageProcessingService = imageProcessingService;
             _logger = logger;
+            _onnxService = onnxService;
         }
 
         public async Task<CoinReadDto> FindMatchAsync(IFormFile obverse, IFormFile reverse)
@@ -71,12 +73,10 @@ namespace CoinsManagerService.Services
         {
             int bestCoinId = 0;
             double bestObvSim = 0;
-            double bestRevSim = 0;
-            int i = 0;
+            double bestRevSim = 0;   
 
             foreach (var stored in storedEmbeddings)
-            {
-                i++;
+            {           
                 var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
                 var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
 
@@ -88,8 +88,7 @@ namespace CoinsManagerService.Services
                     bestObvSim = obvSim;
                     bestRevSim = revSim;
                     bestCoinId = stored.CoinId;
-                }
-                _logger.LogInformation($"{i} Cosine similarity for {stored.CoinId} is {obvSim}/{revSim}");
+                }     
             }
 
             return (bestCoinId, bestObvSim, bestRevSim);
@@ -99,18 +98,9 @@ namespace CoinsManagerService.Services
         {           
             using var ms = new MemoryStream();
             image.SaveAsPng(ms);
-            ms.Seek(0, SeekOrigin.Begin);
-            var modelPath = Path.Combine(AppContext.BaseDirectory, "ML", "clip-ViT-B-32-vision.onnx");
+            ms.Seek(0, SeekOrigin.Begin);            
             var imageTensor = PreprocessImage(ms);
-
-            using var session = new InferenceSession(modelPath);
-
-            var inputs = new List<NamedOnnxValue>
-            {
-                NamedOnnxValue.CreateFromTensor("pixel_values", imageTensor)
-            };
-
-            using var results = session.Run(inputs);
+            var results = _onnxService.GenerateEmbeddings(imageTensor);
 
             // Find output by name or index. Common names: "image_embeds", or check session.OutputMetadata.Keys
             var outputTensor = results
