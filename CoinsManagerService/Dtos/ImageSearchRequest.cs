@@ -10,5 +10,7 @@ namespace CoinsManagerService.Dtos
 
         [Required]
         public IFormFile Reverse { get; set; }
+        [Required]
+        public int topCount { get; set; }
     }
 }

@@ -29,7 +29,7 @@ namespace CoinsManagerService.Controllers
             if (request.Obverse == null || request.Reverse == null)
                 return BadRequest("Both images are required."); 
             
-            var match = await _coinSearchService.FindMatchAsync(request.Obverse, request.Reverse);
+            var match = await _coinSearchService.FindMatchesAsync(request.Obverse, request.Reverse, request.topCount);
 
             if (match == null)
                 return NotFound(new { message = "Coin not found" });

@@ -35,28 +35,35 @@ namespace CoinsManagerService.Services
             _onnxService = onnxService;
         }
 
-        public async Task<CoinReadDto> FindMatchAsync(IFormFile obverse, IFormFile reverse)
-        {
-            _logger.LogInformation("Getting embeddings for coin obverse");
-            var obvEmbedding = await GetImageEmbeddingAsync(obverse);
+        public async Task<IEnumerable<CoinReadDto>> FindMatchesAsync(IFormFile obverse, IFormFile reverse, int topCount)
+        { 
+            _logger.LogInformation("Start embeddings generation");
 
-            _logger.LogInformation("Getting embeddings for coin reverse");
-            var revEmbedding = await GetImageEmbeddingAsync(reverse);
+            var obvTask = GetImageEmbeddingAsync(obverse);
+            var revTask = GetImageEmbeddingAsync(reverse);
 
-            _logger.LogInformation("Getting embedding for stored coins");
+            await Task.WhenAll(obvTask, revTask);
+
+            var obvEmbedding = obvTask.Result;
+            var revEmbedding = revTask.Result;
+
+            _logger.LogInformation("Embeddings has been generated");
+
+            _logger.LogInformation("Getting stored embeddings");
             var storedEmbeddings = await _coinRepository.GetCoinEmbeddingsAsync();
 
             _logger.LogInformation("Finding best coin match");
-            var bestMatch = FindBestMatch(obvEmbedding, revEmbedding, storedEmbeddings);
+            var bestMatches = FindTopMatches(obvEmbedding, revEmbedding, storedEmbeddings, topCount);
 
             const double threshold = 0.85;
-            if (bestMatch.ObverseSimilarity > threshold && bestMatch.ReverseSimilarity > threshold)
-            {
-                var coin = await _coinRepository.GetCoinByIdAsync(bestMatch.CoinId);
-                return _mapper.Map<CoinReadDto>(coin);
-            }
 
-            return null;
+            var matches = new List<CoinReadDto>();
+            foreach (var m in bestMatches.Where(m => m.ObverseSimilarity > threshold && m.ReverseSimilarity > threshold))
+            {
+                var coin = await _coinRepository.GetCoinByIdAsync(m.CoinId);
+                matches.Add(_mapper.Map<CoinReadDto>(coin));
+            }
+            return matches;
         }
 
         private async Task<float[]> GetImageEmbeddingAsync(IFormFile image)
@@ -68,30 +75,28 @@ namespace CoinsManagerService.Services
             return GetEmbedding(cropped);
         }
 
-        private (int CoinId, double ObverseSimilarity, double ReverseSimilarity) FindBestMatch(
-            float[] obvEmbedding, float[] revEmbedding, IEnumerable<CoinEmbeddings> storedEmbeddings)
+        private List<(int CoinId, double ObverseSimilarity, double ReverseSimilarity)> FindTopMatches(
+            float[] obvEmbedding, float[] revEmbedding, IEnumerable<CoinEmbeddings> storedEmbeddings, int topCount)
         {
-            int bestCoinId = 0;
-            double bestObvSim = 0;
-            double bestRevSim = 0;   
+            var matches = new List<(int CoinId, double ObverseSimilarity, double ReverseSimilarity)>();
 
             foreach (var stored in storedEmbeddings)
-            {           
+            {
                 var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
                 var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
 
                 var obvSim = CosineSimilarity(obvEmbedding, storedObv);
                 var revSim = CosineSimilarity(revEmbedding, storedRev);
 
-                if (obvSim > bestObvSim && revSim > bestRevSim)
-                {
-                    bestObvSim = obvSim;
-                    bestRevSim = revSim;
-                    bestCoinId = stored.CoinId;
-                }     
+                matches.Add((stored.CoinId, obvSim, revSim));
             }
+ 
+            var topMatches = matches
+                .OrderByDescending(m => Math.Min(m.ObverseSimilarity, m.ReverseSimilarity))
+                .Take(topCount)
+                .ToList();
 
-            return (bestCoinId, bestObvSim, bestRevSim);
+            return topMatches;
         }
 
         private float[] GetEmbedding(Image<Rgba32> image)
