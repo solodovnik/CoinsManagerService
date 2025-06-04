@@ -43,6 +43,13 @@ namespace CoinsManagerService.Data
             return await _context.Coins.FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task<List<Coin>> GetCoinsByIdsAsync(IEnumerable<int> ids)
+        {
+            return await _context.Coins
+                .Where(x => ids.Contains(x.Id))
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Coin>> GetCoinsByPeriodIdAsync(int periodId)
         {
             return await _context.Coins.Where(x => x.Period == periodId).ToListAsync();

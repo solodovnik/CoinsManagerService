@@ -14,7 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("CoinsConn")));
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("CoinsConn"), 
+    sqlOptions => sqlOptions.UseCompatibilityLevel(120)));
 
 builder.Services.AddScoped<ICoinsRepo, CoinsRepo>();
 builder.Services.AddControllers().AddNewtonsoftJson();
@@ -58,6 +59,8 @@ builder.Services.AddScoped<ICoinSearchService, CoinSearchService>();
 builder.Services.AddSingleton<IImageProcessingService, ImageProcessingService>();
 builder.Services.AddSingleton<IOnnxService, OnnxService>();
 builder.Services.AddHttpClient<IAzureFunctionService, AzureFunctionService>();
+builder.Services.AddHttpClient<IImageProcessingService, ImageProcessingService>();
+
 
 var app = builder.Build();
 

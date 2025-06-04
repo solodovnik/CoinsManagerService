@@ -21,11 +21,15 @@ namespace CoinsManagerService.Services
 
         private readonly ILogger<ImageProcessingService> _logger;
         private readonly IConfiguration _configuration;
-        public ImageProcessingService(ILogger<ImageProcessingService> logger, IConfiguration configuration)
+        private readonly HttpClient _httpClient;
+
+        public ImageProcessingService(ILogger<ImageProcessingService> logger, IConfiguration configuration, HttpClient httpClient)
         {
             _logger = logger;
             _configuration = configuration;
+            _httpClient = httpClient;
         }
+
         public string ConvertToBase64(Image<Rgba32> image)
         {
             using var outputStream = new MemoryStream();
@@ -50,25 +54,18 @@ namespace CoinsManagerService.Services
             return imageBytes;
         }
 
-        public async Task<string> CorrectImageOrientationAsync(string base64Image)
+        public async Task<Stream> CorrectImageOrientationAsync(Stream imageStream)
         {
-            var imageBytes = Convert.FromBase64String(base64Image);
-            using var inputStream = new MemoryStream(imageBytes);
-            inputStream.Position = 0;
+            imageStream.Position = 0;
+            using var image = await Image.LoadAsync<Rgba32>(imageStream);
 
-            using var image = await Image.LoadAsync(inputStream);
             var exif = image.Metadata.ExifProfile;
-
             ushort orientation = 1;
 
             var orientationEntry = exif?.Values.FirstOrDefault(v => v.Tag == ExifTag.Orientation);
-            if (orientationEntry != null)
+            if (orientationEntry?.GetValue() is ushort parsed)
             {
-                var rawValue = orientationEntry.GetValue();
-                if (rawValue is ushort parsed)
-                {
-                    orientation = parsed;
-                }
+                orientation = parsed;
             }
 
             switch (orientation)
@@ -98,38 +95,49 @@ namespace CoinsManagerService.Services
 
             exif?.RemoveValue(ExifTag.Orientation);
 
-            using var outputStream = new MemoryStream();
+            var outputStream = new MemoryStream();
             await image.SaveAsJpegAsync(outputStream);
-            return Convert.ToBase64String(outputStream.ToArray());
+            outputStream.Position = 0;
+            return outputStream;
         }
 
-        public async Task<Image<Rgba32>> CropAsync(byte[] imageBytes)
+
+        public async Task<Image<Rgba32>> CropAsync(Stream imageStream)
         {
-            var image = Image.Load<Rgba32>(imageBytes);
-            int targetWidth = 350;
-            int targetHeight = 420;
+            const int targetWidth = 350;
+            const int targetHeight = 420;
 
-            var correctedImage = await CorrectImageOrientationAsync(ConvertToBase64(image));
+            imageStream.Position = 0;
 
-            var bbox = await GetCoinBoundingBoxAsync(Convert.FromBase64String(correctedImage));
-            byte[] correctedImageBytes = Convert.FromBase64String(correctedImage);
-            var correctedImageRgba32 = Image.Load<Rgba32>(correctedImageBytes);
+            // Convert to JPEG for consistent orientation correction
+            using var jpegStream = new MemoryStream();
+            using (var originalImage = await Image.LoadAsync<Rgba32>(imageStream))
+            {
+                await originalImage.SaveAsJpegAsync(jpegStream);
+            }
+
+            // Correct orientation
+            using var correctedStream = await CorrectImageOrientationAsync(jpegStream);
+
+            // Load corrected image
+            using var correctedImage = await Image.LoadAsync<Rgba32>(correctedStream);
+
+            var imageBytes = ((MemoryStream)correctedStream).ToArray();
+            var bbox = await GetCoinBoundingBoxAsync(imageBytes);
 
             Image<Rgba32> cropped;
 
             if (bbox != null)
             {
                 _logger.LogInformation("Applying crop at the coin location recognized by the AI.");
-                cropped = CropWithAI(correctedImageRgba32, bbox);
+                cropped = CropWithAI(correctedImage, bbox);
             }
             else
             {
-                // Fallback: center square crop
                 _logger.LogInformation("Applying center square crop since the AI couldn't recognize the coin.");
-                cropped = CropImageCenter(image);
+                cropped = CropImageCenter(correctedImage.Clone());
             }
 
-            // Resize with Crop mode to fill target area without black bars
             cropped.Mutate(ctx => ctx.Resize(new ResizeOptions
             {
                 Size = new Size(targetWidth, targetHeight),
@@ -175,15 +183,16 @@ namespace CoinsManagerService.Services
                 var endpoint = _configuration["CustomVisionPredictionEndpoint"];
                 var projectId = _configuration["CustomVisionProjectId"];
                 var publishedName = _configuration["CustomVisionPublishedModelName"];
-
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("Prediction-Key", predictionKey);
-
-                using var content = new ByteArrayContent(imageBytes);
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
                 var url = $"{endpoint}/customvision/v3.0/Prediction/{projectId}/detect/iterations/{publishedName}/image";
-                var response = await client.PostAsync(url, content);
+
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = new ByteArrayContent(imageBytes)
+                };
+                request.Headers.Add("Prediction-Key", predictionKey);
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                
+                var response = await _httpClient.SendAsync(request);
                 var result = await response.Content.ReadAsStringAsync();
 
                 var json = JObject.Parse(result);

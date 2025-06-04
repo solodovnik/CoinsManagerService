@@ -8,7 +8,6 @@ using System.IO;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using CoinsManagerService.Data;
 using System.Text.Json;
@@ -36,7 +35,7 @@ namespace CoinsManagerService.Services
         }
 
         public async Task<IEnumerable<CoinReadDto>> FindMatchesAsync(IFormFile obverse, IFormFile reverse, int topCount)
-        { 
+        {
             _logger.LogInformation("Start embeddings generation");
 
             var obvTask = GetImageEmbeddingAsync(obverse);
@@ -57,12 +56,17 @@ namespace CoinsManagerService.Services
 
             const double threshold = 0.85;
 
-            var matches = new List<CoinReadDto>();
-            foreach (var m in bestMatches.Where(m => m.ObverseSimilarity > threshold && m.ReverseSimilarity > threshold))
-            {
-                var coin = await _coinRepository.GetCoinByIdAsync(m.CoinId);
-                matches.Add(_mapper.Map<CoinReadDto>(coin));
-            }
+            var matchingIds = bestMatches
+                .Where(m => m.ObverseSimilarity > threshold && m.ReverseSimilarity > threshold)
+                .Select(m => m.CoinId)
+                .ToList();
+
+            var coins = await _coinRepository.GetCoinsByIdsAsync(matchingIds);
+
+            var matches = coins
+                .Select(c => _mapper.Map<CoinReadDto>(c))
+                .ToList();
+
             return matches;
         }
 
@@ -70,40 +74,44 @@ namespace CoinsManagerService.Services
         {
             using var stream = new MemoryStream();
             await image.CopyToAsync(stream);
-            var bytes = stream.ToArray();
-            var cropped = await _imageProcessingService.CropAsync(bytes);
+            stream.Position = 0;
+            //var cropped = await _imageProcessingService.CropAsync(stream);
+            //var bytes = stream.ToArray();
+            var cropped = await _imageProcessingService.CropAsync(stream);
             return GetEmbedding(cropped);
         }
 
         private List<(int CoinId, double ObverseSimilarity, double ReverseSimilarity)> FindTopMatches(
             float[] obvEmbedding, float[] revEmbedding, IEnumerable<CoinEmbeddings> storedEmbeddings, int topCount)
         {
-            var matches = new List<(int CoinId, double ObverseSimilarity, double ReverseSimilarity)>();
+            var bestMatches = new List<(int CoinId, double ObverseSimilarity, double ReverseSimilarity)>();
 
-            foreach (var stored in storedEmbeddings)
-            {
-                var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
-                var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
+            var parallelMatches = storedEmbeddings.AsParallel()
+                .Select(stored =>
+                {
+                    var storedObv = JsonSerializer.Deserialize<float[]>(stored.ObverseEmbedding);
+                    var storedRev = JsonSerializer.Deserialize<float[]>(stored.ReverseEmbedding);
 
-                var obvSim = CosineSimilarity(obvEmbedding, storedObv);
-                var revSim = CosineSimilarity(revEmbedding, storedRev);
+                    var obvSim = CosineSimilarity(obvEmbedding, storedObv);
+                    var revSim = CosineSimilarity(revEmbedding, storedRev);
 
-                matches.Add((stored.CoinId, obvSim, revSim));
-            }
- 
-            var topMatches = matches
-                .OrderByDescending(m => Math.Min(m.ObverseSimilarity, m.ReverseSimilarity))
+                    return (stored.CoinId, Obv: obvSim, Rev: revSim);
+                })
+                .ToList();
+
+            bestMatches = parallelMatches
+                .OrderByDescending(m => Math.Min(m.Obv, m.Rev))
                 .Take(topCount)
                 .ToList();
 
-            return topMatches;
+            return bestMatches;
         }
 
         private float[] GetEmbedding(Image<Rgba32> image)
-        {           
+        {
             using var ms = new MemoryStream();
             image.SaveAsPng(ms);
-            ms.Seek(0, SeekOrigin.Begin);            
+            ms.Seek(0, SeekOrigin.Begin);
             var imageTensor = PreprocessImage(ms);
             var results = _onnxService.GenerateEmbeddings(imageTensor);
 
@@ -115,7 +123,7 @@ namespace CoinsManagerService.Services
             // Optional: L2 normalize the embedding (recommended for search)
             var norm = MathF.Sqrt(outputTensor.Sum(v => v * v));
             var normalized = outputTensor.Select(v => v / norm).ToArray();
-        
+
             return normalized;
         }
 
