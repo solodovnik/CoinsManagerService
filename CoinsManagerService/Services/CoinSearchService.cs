@@ -75,8 +75,6 @@ namespace CoinsManagerService.Services
             using var stream = new MemoryStream();
             await image.CopyToAsync(stream);
             stream.Position = 0;
-            //var cropped = await _imageProcessingService.CropAsync(stream);
-            //var bytes = stream.ToArray();
             var cropped = await _imageProcessingService.CropAsync(stream);
             return GetEmbedding(cropped);
         }

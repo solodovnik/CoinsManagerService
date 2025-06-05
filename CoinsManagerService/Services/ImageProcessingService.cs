@@ -40,18 +40,28 @@ namespace CoinsManagerService.Services
             return Convert.ToBase64String(outputStream.ToArray());
         }
 
-        public byte[] ConvertToPng(byte[] imageBytes)
+        public Stream ConvertToPng(Stream imageStream)
         {
-            using var image = new MagickImage(imageBytes);
+            using var image = new MagickImage(imageStream);
 
             if (image.Format == MagickFormat.Heic || image.Format == MagickFormat.Heif)
             {
                 _logger.LogInformation("Converting image from HEIC to PNG.");
-                return image.ToByteArray(MagickFormat.Png);
+
+                var outputStream = new MemoryStream();
+                image.Write(outputStream, MagickFormat.Png);
+                outputStream.Position = 0;
+                return outputStream;
             }
 
             _logger.LogInformation($"Image format is {image.Format}, no conversion needed.");
-            return imageBytes;
+
+            // Return original stream copy to avoid returning disposed input
+            var originalCopy = new MemoryStream();
+            imageStream.Position = 0;
+            imageStream.CopyTo(originalCopy);
+            originalCopy.Position = 0;
+            return originalCopy;
         }
 
         public async Task<Stream> CorrectImageOrientationAsync(Stream imageStream)
@@ -101,42 +111,33 @@ namespace CoinsManagerService.Services
             return outputStream;
         }
 
-
         public async Task<Image<Rgba32>> CropAsync(Stream imageStream)
         {
-            const int targetWidth = 350;
+            const int targetWidth = 420;
             const int targetHeight = 420;
 
             imageStream.Position = 0;
+  
+            using var correctedStream = await CorrectImageOrientationAsync(imageStream);
 
-            // Convert to JPEG for consistent orientation correction
-            using var jpegStream = new MemoryStream();
-            using (var originalImage = await Image.LoadAsync<Rgba32>(imageStream))
-            {
-                await originalImage.SaveAsJpegAsync(jpegStream);
-            }
+            // Copy corrected stream into a buffer so we can both read the image and extract bytes
+            using var bufferedStream = new MemoryStream();
+            await correctedStream.CopyToAsync(bufferedStream);
+            bufferedStream.Position = 0;
+          
+            using var correctedImage = await Image.LoadAsync<Rgba32>(bufferedStream);
+         
+            var imageBytes = bufferedStream.ToArray();
 
-            // Correct orientation
-            using var correctedStream = await CorrectImageOrientationAsync(jpegStream);
-
-            // Load corrected image
-            using var correctedImage = await Image.LoadAsync<Rgba32>(correctedStream);
-
-            var imageBytes = ((MemoryStream)correctedStream).ToArray();
             var bbox = await GetCoinBoundingBoxAsync(imageBytes);
-
-            Image<Rgba32> cropped;
-
-            if (bbox != null)
+            if (bbox == null)
             {
-                _logger.LogInformation("Applying crop at the coin location recognized by the AI.");
-                cropped = CropWithAI(correctedImage, bbox);
+                _logger.LogError("AI couldn't recognize the coin.");
+                return null;
             }
-            else
-            {
-                _logger.LogInformation("Applying center square crop since the AI couldn't recognize the coin.");
-                cropped = CropImageCenter(correctedImage.Clone());
-            }
+
+            _logger.LogInformation("Applying crop at the coin location recognized by the AI.");
+            var cropped = CropWithBoundingBox(correctedImage, bbox);
 
             cropped.Mutate(ctx => ctx.Resize(new ResizeOptions
             {
@@ -147,23 +148,29 @@ namespace CoinsManagerService.Services
             return cropped;
         }
 
-        private Image<Rgba32> CropImageCenter(Image<Rgba32> image)
+        public Image<Rgba32> MergeImagesSideBySide(Image<Rgba32> leftImage, Image<Rgba32> rightImage)
         {
-            _logger.LogInformation("Applying center square crop since the AI couldn't recognize the coin.");
-            int side = Math.Min(image.Width, image.Height);
-            int cropX = (image.Width - side) / 2;
-            int cropY = (image.Height - side) / 2;
-            return image.Clone(ctx => ctx.Crop(new Rectangle(cropX, cropY, side, side)));
+            int width = leftImage.Width + rightImage.Width;
+            int height = Math.Max(leftImage.Height, rightImage.Height);
+
+            var mergedImage = new Image<Rgba32>(width, height);
+            mergedImage.Mutate(x =>
+            {
+                x.DrawImage(leftImage, new Point(0, 0), 1f);
+                x.DrawImage(rightImage, new Point(leftImage.Width, 0), 1f);
+            });
+
+            return mergedImage;
         }
 
-        private Image<Rgba32> CropWithAI(Image<Rgba32> image, BoundingBoxPercent bbox)
+        private Image<Rgba32> CropWithBoundingBox(Image<Rgba32> image, BoundingBoxPercent bbox)
         {
             int x = (int)(bbox.Left * image.Width);
             int y = (int)(bbox.Top * image.Height);
             int w = (int)(bbox.Width * image.Width);
             int h = (int)(bbox.Height * image.Height);
 
-            // Set padding to 11% to zoom in
+            // Set padding to 5% to zoom in
             int padX = (int)(w * 0.05);
             int padY = (int)(h * 0.05);
 

@@ -9,12 +9,11 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp.Formats.Png;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CoinsManagerService.Controllers
@@ -27,9 +26,9 @@ namespace CoinsManagerService.Controllers
         private readonly IMapper _mapper;
         private readonly ICoinsRepo _coinsRepo;
         private readonly IAzureBlobService _azureBlobService;
-        private readonly IAzureFunctionService _azureFunctionService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<CoinsController> _logger;
+        private readonly IImageProcessingService _imageProcessingService;
         private const string _getCoinEndpointName = "GetCoinEndpoint";
 
         public CoinsController(
@@ -38,13 +37,14 @@ namespace CoinsManagerService.Controllers
             IAzureBlobService azureBlobService,
             IAzureFunctionService azureFunctionService,
             IConfiguration configuration,
+            IImageProcessingService imageProcessingService,
             ILogger<CoinsController> logger)
         {
             _mapper = mapper;
             _coinsRepo = coinsRepo;
             _azureBlobService = azureBlobService;
-            _azureFunctionService = azureFunctionService;
             _configuration = configuration;
+            _imageProcessingService = imageProcessingService;
             _logger = logger;
         }
 
@@ -188,31 +188,26 @@ namespace CoinsManagerService.Controllers
                 var coinModel = _mapper.Map<Coin>(coinCreateDto);             
                 coinModel.PictPreviewPath = string.Join("/", filePath, fileName);
 
-                // Convert images to Base64
-                _logger.LogInformation("Converting obverse image to Base64.");
-                var obverseBase64 = await ConvertImageToBase64Async(coinCreateDto.ObverseImage);
+                using var obverseStream = coinCreateDto.ObverseImage.OpenReadStream();
+                using var reverseStream = coinCreateDto.ReverseImage.OpenReadStream();
 
-                _logger.LogInformation("Converting reverse image to Base64.");
-                var reverseBase64 = await ConvertImageToBase64Async(coinCreateDto.ReverseImage);
+                var croppedObverseTask = _imageProcessingService.CropAsync(obverseStream);
+                var croppedReverseTask = _imageProcessingService.CropAsync(reverseStream);
 
-                // Call image processing function
-                _logger.LogInformation("Calling image processing function.");
-                var mergedImageBase64 = await CallImageProcessingFunction(obverseBase64, reverseBase64);
+                await Task.WhenAll(croppedObverseTask, croppedReverseTask);
 
-                if (string.IsNullOrEmpty(mergedImageBase64))
-                {
-                    _logger.LogError("Image processing function returned an empty result.");
-                    return StatusCode(500, "Failed to process images.");
-                }
+                var croppedObverse = croppedObverseTask.Result;
+                var croppedReverse = croppedReverseTask.Result;
 
-                // Convert merged image back to stream and upload
-                var mergedImageBytes = Convert.FromBase64String(mergedImageBase64);
-                using var stream = new MemoryStream(mergedImageBytes);
+                var mergedImage = _imageProcessingService.MergeImagesSideBySide(croppedObverse, croppedReverse);
+
+                using var mergedImageStream = new MemoryStream();
+                mergedImage.Save(mergedImageStream, new PngEncoder());
+                mergedImageStream.Position = 0;
 
                 _logger.LogInformation("Uploading processed image to Azure Blob Storage.");
-                await _azureBlobService.UploadFileAsync(stream, coinModel.PictPreviewPath, containerName);
-
-                // Save coin to repository
+                await _azureBlobService.UploadFileAsync(mergedImageStream, coinModel.PictPreviewPath, containerName);
+       
                 _logger.LogInformation("Creating coin in repository.");
                 await _coinsRepo.CreateCoin(coinModel);
 
@@ -351,20 +346,6 @@ namespace CoinsManagerService.Controllers
             using var ms = new MemoryStream();
             await image.CopyToAsync(ms);
             return Convert.ToBase64String(ms.ToArray());
-        }
-
-        private async Task<string> CallImageProcessingFunction(string obverseBase64, string reverseBase64)
-        {
-            var functionUrl = _configuration["AzureFunctions:ProcessImages:Url"];
-            var functionKey = _configuration["AzureFunctions:ProcessImages:FunctionKey"];
-
-            var requestPayload = new { ObverseImageBase64 = obverseBase64, ReverseImageBase64 = reverseBase64 };            
-            var response = await _azureFunctionService.CallFunctionAsync(functionUrl, functionKey, requestPayload);
-
-            if (!response.IsSuccessStatusCode) return null;
-          
-            var responseContent = await response.Content.ReadFromJsonAsync<JsonElement>();
-            return responseContent.GetProperty("mergedImageBase64").GetString();
         }
     }
 }
