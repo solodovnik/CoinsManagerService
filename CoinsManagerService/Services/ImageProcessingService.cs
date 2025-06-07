@@ -30,16 +30,6 @@ namespace CoinsManagerService.Services
             _httpClient = httpClient;
         }
 
-        public string ConvertToBase64(Image<Rgba32> image)
-        {
-            using var outputStream = new MemoryStream();
-            image.Save(outputStream, new JpegEncoder
-            {
-                Quality = 75
-            });
-            return Convert.ToBase64String(outputStream.ToArray());
-        }
-
         public Stream ConvertToPng(Stream imageStream)
         {
             using var image = new MagickImage(imageStream);
@@ -113,20 +103,20 @@ namespace CoinsManagerService.Services
 
         public async Task<Image<Rgba32>> CropAsync(Stream imageStream)
         {
-            const int targetWidth = 420;
-            const int targetHeight = 420;
+            const int targetWidth = 640;
+            const int targetHeight = 640;
 
             imageStream.Position = 0;
-  
+
             using var correctedStream = await CorrectImageOrientationAsync(imageStream);
 
             // Copy corrected stream into a buffer so we can both read the image and extract bytes
             using var bufferedStream = new MemoryStream();
             await correctedStream.CopyToAsync(bufferedStream);
             bufferedStream.Position = 0;
-          
+
             using var correctedImage = await Image.LoadAsync<Rgba32>(bufferedStream);
-         
+
             var imageBytes = bufferedStream.ToArray();
 
             var bbox = await GetCoinBoundingBoxAsync(imageBytes);
@@ -148,7 +138,18 @@ namespace CoinsManagerService.Services
             return cropped;
         }
 
-        public Image<Rgba32> MergeImagesSideBySide(Image<Rgba32> leftImage, Image<Rgba32> rightImage)
+        public Image<Rgba32> CreateThumbnail(Image<Rgba32> leftImage, Image<Rgba32> rightImage)
+        {
+            var mergedImage = MergeImagesSideBySide(leftImage, rightImage);
+       
+            int newWidth = 420;
+            int newHeight = (int)(mergedImage.Height * (newWidth / (float)mergedImage.Width));
+            mergedImage.Mutate(x => x.Resize(newWidth, newHeight));
+
+            return mergedImage;
+        }
+
+        private Image<Rgba32> MergeImagesSideBySide(Image<Rgba32> leftImage, Image<Rgba32> rightImage)
         {
             int width = leftImage.Width + rightImage.Width;
             int height = Math.Max(leftImage.Height, rightImage.Height);
@@ -198,7 +199,7 @@ namespace CoinsManagerService.Services
                 };
                 request.Headers.Add("Prediction-Key", predictionKey);
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                
+
                 var response = await _httpClient.SendAsync(request);
                 var result = await response.Content.ReadAsStringAsync();
 

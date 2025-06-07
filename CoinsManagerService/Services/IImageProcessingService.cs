@@ -8,9 +8,8 @@ namespace CoinsManagerService.Services
     public interface IImageProcessingService
     {
         Stream ConvertToPng(Stream imageBytes);
-        string ConvertToBase64(Image<Rgba32> image);
         Task<Image<Rgba32>> CropAsync(Stream imageStream);
         Task<Stream> CorrectImageOrientationAsync(Stream imageStream);
-        Image<Rgba32> MergeImagesSideBySide(Image<Rgba32> leftImage, Image<Rgba32> rightImage);
+        Image<Rgba32> CreateThumbnail(Image<Rgba32> leftImage, Image<Rgba32> rightImage);
     }
 }

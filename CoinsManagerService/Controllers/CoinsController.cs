@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure.Storage.Blobs.Models;
 using CoinsManagerService.Data;
 using CoinsManagerService.Dtos;
 using CoinsManagerService.Models;
@@ -9,6 +10,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -166,7 +169,8 @@ namespace CoinsManagerService.Controllers
         [SwaggerResponse(500)]
         public async Task<ActionResult<CoinReadDto>> CreateCoin([FromForm] CoinCreateDto coinCreateDto)
         {
-            string containerName = _configuration["ImagesContainerName"];
+            string imagesContainerName = _configuration["ImagesContainerName"];
+            string thumbnailsContainerName = _configuration["ThumbnailsContainerName"];
 
             if (coinCreateDto == null)
             {
@@ -199,15 +203,31 @@ namespace CoinsManagerService.Controllers
                 var croppedObverse = croppedObverseTask.Result;
                 var croppedReverse = croppedReverseTask.Result;
 
-                var mergedImage = _imageProcessingService.MergeImagesSideBySide(croppedObverse, croppedReverse);
+                using var obverseStreamOut = new MemoryStream();
+                using var reverseStreamOut = new MemoryStream();
 
-                using var mergedImageStream = new MemoryStream();
-                mergedImage.Save(mergedImageStream, new PngEncoder());
-                mergedImageStream.Position = 0;
+                await croppedObverse.SaveAsJpegAsync(obverseStreamOut);
+                await croppedReverse.SaveAsJpegAsync(reverseStreamOut);
 
-                _logger.LogInformation("Uploading processed image to Azure Blob Storage.");
-                await _azureBlobService.UploadFileAsync(mergedImageStream, coinModel.PictPreviewPath, containerName);
-       
+                obverseStreamOut.Position = 0;
+                reverseStreamOut.Position = 0;
+
+                var thumbnailImage = _imageProcessingService.CreateThumbnail(croppedObverse, croppedReverse);
+
+                using var thumbnailImageStream = new MemoryStream();
+                thumbnailImage.Save(thumbnailImageStream, new JpegEncoder());
+                thumbnailImageStream.Position = 0;
+
+                _logger.LogInformation("Uploading processed images to Azure Blob Storage.");
+                await _azureBlobService.UploadFileAsync(thumbnailImageStream, coinModel.PictPreviewPath, thumbnailsContainerName);
+
+                string directory = Path.GetDirectoryName(coinModel.PictPreviewPath) ?? ""; ;
+                string nameWithoutExtension = Path.GetFileNameWithoutExtension(coinModel.PictPreviewPath);
+                string extension = Path.GetExtension(coinModel.PictPreviewPath);
+
+                await _azureBlobService.UploadFileAsync(obverseStreamOut, $"{directory}/{nameWithoutExtension}_obverse{extension}", imagesContainerName);
+                await _azureBlobService.UploadFileAsync(reverseStreamOut, $"{directory}/{nameWithoutExtension}_reverse{extension}", imagesContainerName);
+
                 _logger.LogInformation("Creating coin in repository.");
                 await _coinsRepo.CreateCoin(coinModel);
 
