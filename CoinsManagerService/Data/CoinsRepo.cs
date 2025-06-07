@@ -109,9 +109,21 @@ namespace CoinsManagerService.Data
             await _context.SaveChangesAsync();
         }
 
+        public async Task RemoveCoinEmbeddings(CoinEmbeddings coinEmbeddings)
+        {
+            ArgumentNullException.ThrowIfNull(coinEmbeddings);
+            _context.CoinEmbeddings.Remove(coinEmbeddings);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
             return (await _context.SaveChangesAsync() >= 0);
+        }
+
+        public async Task<CoinEmbeddings> GetCoinEmbeddingsByCoinId(int coinId)
+        {
+            return await _context.CoinEmbeddings.FirstOrDefaultAsync(x => x.CoinId == coinId);
         }
     }
 }
