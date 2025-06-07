@@ -313,6 +313,12 @@ namespace CoinsManagerService.Controllers
         {
             try
             {
+                var embeddingsToDelete = await _coinsRepo.GetCoinEmbeddingsByCoinId(coinId);
+                if (embeddingsToDelete != null)
+                {
+                    await _coinsRepo.RemoveCoinEmbeddings(embeddingsToDelete);
+                }
+
                 var coinToDelete = await _coinsRepo.GetCoinByIdAsync(coinId);
 
                 if (coinToDelete == null)
@@ -323,12 +329,6 @@ namespace CoinsManagerService.Controllers
                 await _coinsRepo.RemoveCoin(coinToDelete);
                 await _azureBlobService.DeleteFileAsync(coinToDelete.PictPreviewPath, _configuration["ImagesContainerName"]);
                 await _azureBlobService.DeleteFileAsync(coinToDelete.PictPreviewPath, _configuration["ThumbnailsContainerName"]);
-
-                var embeddingsToDelete = await _coinsRepo.GetCoinEmbeddingsByCoinId(coinId);
-                if (embeddingsToDelete != null)
-                {
-                    await _coinsRepo.RemoveCoinEmbeddings(embeddingsToDelete);
-                }
 
                 return Ok();
             }
