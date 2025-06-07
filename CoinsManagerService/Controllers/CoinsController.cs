@@ -327,7 +327,7 @@ namespace CoinsManagerService.Controllers
                 var embeddingsToDelete = await _coinsRepo.GetCoinEmbeddingsByCoinId(coinId);
                 if (embeddingsToDelete != null)
                 {
-                    await _coinsRepo.RemoveEmbeddings(embeddingsToDelete);
+                    await _coinsRepo.RemoveCoinEmbeddings(embeddingsToDelete);
                 }
 
                 return Ok();

@@ -25,6 +25,6 @@ namespace CoinsManagerService.Data
 
         Task CreateCoin(Coin coin);
         Task RemoveCoin(Coin coin);
-        Task RemoveEmbeddings(CoinEmbeddings coinEmbeddings);
+        Task RemoveCoinEmbeddings(CoinEmbeddings coinEmbeddings);
     }
 }
